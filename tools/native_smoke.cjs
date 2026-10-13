@@ -33,25 +33,35 @@ async function main() {
   }
   // Explicit JSON results avoid this IDE version's Page.getData/callWxMethod bridge timeout.
   // Fresh routes keep this IDE's cached tab stacks from returning another page's data.
-  const route=async(method,url)=>{await mini.evaluate(u=>{wx.reLaunch({url:u});return true},url);await pause(3000)}
+  const waitPage=async path=>{
+    for(let i=0;i<40;i++){
+      const current=await mini.evaluate(()=>{const p=getCurrentPages();return p[p.length-1].route})
+      if(current===path.replace(/^\//,''))return
+      await pause(250)
+    }
+    throw new Error('Simulator route did not settle: '+path)
+  }
+  const route=async(method,url)=>{await mini.evaluate(u=>{wx.reLaunch({url:u});return true},url);await waitPage(url.split('?')[0]);await pause(1500)}
   const pageData=async()=>JSON.parse(await mini.evaluate(()=>{const pages=getCurrentPages();return JSON.stringify(pages[pages.length-1].data)}))
   const callPage=(method,arg)=>mini.evaluate(v=>{const pages=getCurrentPages();pages[pages.length-1][v.method](v.arg);return true},{method,arg:arg||null})
   await route('switchTab','/pages/home/index'); await pause(1000)
   console.log('Native overview route opened')
   let data = await pageData()
+  for(let i=0;i<30 && (!data.status || data.status.state!=='online');i++){await pause(500);data=await pageData()}
   if (data.error || !data.status || data.status.state !== 'online' || data.status.nodes.length !== 2) throw new Error('Home did not show two live cloud nodes: '+(data.error || 'state missing'))
   capture('home')
   console.log('PASS native overview: two actual live cloud nodes')
-  // Exercise the actual overview callback and switchTab/onShow, including the cached tab.
+  // Exercise actual page callbacks and switchTab/onShow. Physical tapping is checked on the phone;
+  // this IDE version's Element bridge hangs, so do not claim simulator pointer coverage.
   for(const node of [2,1,2,1]) {
-    await callPage('trends',{currentTarget:{dataset:{node}}});await pause(1800)
+    await callPage('trends',{currentTarget:{dataset:{node}}});await waitPage('/pages/trends/index');await pause(500)
     data=await pageData()
     if(data.node!==node || data.metric!==(node===2?'cpu':'temperature'))throw new Error('Overview selected the wrong trend node: '+node)
     if(node===1 && !data.metrics.some(x=>x.key==='vibration'))throw new Error('Star vibration selector missing')
-    await mini.evaluate(()=>{wx.switchTab({url:'/pages/home/index'});return true});await pause(600)
+    await mini.evaluate(()=>{wx.switchTab({url:'/pages/home/index'});return true});await waitPage('/pages/home/index');await pause(500)
   }
   console.log('PASS native overview navigation: correct Star/Loongson node on fresh and cached trend tabs')
-  await callPage('trends',{currentTarget:{dataset:{node:1}}});await pause(2500)
+  await callPage('trends',{currentTarget:{dataset:{node:1}}});await waitPage('/pages/trends/index');await pause(2500)
   data=await pageData()
   if (data.error || !data.points.length) throw new Error('Trend data missing')
   capture('trends')

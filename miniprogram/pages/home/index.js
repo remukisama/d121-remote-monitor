@@ -1,6 +1,6 @@
 const api = require('../../utils/api'), fmt = require('../../utils/format')
 Page({
-  data: { status: null, events: [], loading: true, error: '' },
+  data: { status: null, events: [], loading: true, error: '', clientVersion:require('../../utils/version') },
   onShow() { if (!api.ensureLogin()) return; this.visible = true; this.refresh(); this.timer = setInterval(() => this.refresh(), 2000) },
   onHide() { this.visible = false; clearInterval(this.timer) },
   onUnload() { this.onHide() },

@@ -71,7 +71,11 @@ async function main() {
     const nodes=status.data.latest?.nodes||[]
     pass('cloud device status',{state:status.data.state,collector:status.data.collector,node_count:nodes.length})
     if(nodes.length!==2 || nodes.some(node=>!node.online || !node.fresh))throw new Error('Both cloud nodes are not reporting fresh live data')
-    const star=nodes.find(node=>node.node===1)
+    // State and motion arrive as separate packets; allow the matching motion to land.
+    let star=nodes.find(node=>node.node===1)
+    for(let i=0;i<12 && (!Number.isFinite(star?.vibration)||!star?.vibration_samples);i++){
+      await pause(400);star=(await request('/api/status')).data.latest?.nodes?.find(node=>node.node===1)
+    }
     if(!star || !Number.isFinite(star.vibration) || !(star.vibration_samples>0))throw new Error('Real Star vibration packets not joined to cloud samples')
     pass('cloud live vibration',{peak_g:star.vibration,valid_samples:star.vibration_samples})
     const series=await request('/api/series?minutes=10')
@@ -83,6 +87,11 @@ async function main() {
     const events=await request('/api/events?limit=20')
     if(events.status!==200)throw new Error('Cloud archived events failed')
     pass('cloud archived events',{count:events.data.items.length})
+    const priorReport=path.join(root,'output','cloud-hardware-verification.json')
+    if(fs.existsSync(priorReport)){
+      const id=JSON.parse(fs.readFileSync(priorReport,'utf8')).master_incident?.id
+      if(id){const prior=await request('/api/events/'+id);if(prior.status!==200||!prior.data.snapshot)throw new Error('Pre-deployment incident history was not preserved');pass('pre-deployment history preserved',{event_id:id})}
+    }
     if(events.data.items.length) {
       const detail=await request('/api/events/'+events.data.items[0].id)
       if(detail.status!==200)throw new Error('Cloud event detail failed')
