@@ -158,4 +158,3 @@ def create_app(cfg=None, collect=True):
 
     return app
 
-app=create_app()

@@ -25,6 +25,16 @@
 
 ## 本机启动与检查
 
+新电脑克隆仓库后，先创建虚拟环境并安装 `requirements.lock.txt`。测试可在未提供私有配置的情况下独立运行；后台只有在启动服务时才加载实际配置并连接数据库。
+
+```powershell
+python -m venv .venv
+& .\.venv\Scripts\python.exe -m pip install -r requirements.lock.txt
+if (!(Test-Path config.private.json)) { Copy-Item config.example.json config.private.json }
+```
+
+复制配置只用于新电脑，不能覆盖已有的 `config.private.json`。正式接收时填好后台 MQTT 账号、设备主题和微信配置；`tools/bootstrap_bemfa.py` 可根据私有配置内的 UID 生成独立后台接收账号。
+
 使用已安装的 `.venv`：
 
 ```powershell

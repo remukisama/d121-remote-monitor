@@ -6,4 +6,4 @@ COPY backend ./backend
 RUN useradd --uid 10001 --create-home appuser
 USER 10001
 EXPOSE 8080
-CMD ["python","-m","uvicorn","backend.api:app","--host","0.0.0.0","--port","8080","--workers","1","--no-access-log"]
+CMD ["python","-m","uvicorn","backend.api:create_app","--factory","--host","0.0.0.0","--port","8080","--workers","1","--no-access-log"]

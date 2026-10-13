@@ -1,7 +1,8 @@
 from pathlib import Path
-import argparse, json, urllib.request
+import argparse, json, time, urllib.request
 parser=argparse.ArgumentParser()
 parser.add_argument('--expected-storage',choices=['TF 卡','板载 Flash'],default='TF 卡')
+parser.add_argument('--wait-seconds',type=int,default=15)
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]
 cfg=json.loads((root/'config.private.json').read_text(encoding='utf-8-sig'))
@@ -10,7 +11,14 @@ def get(path,token):
     return json.load(urllib.request.urlopen(req,timeout=5))
 req=urllib.request.Request('http://127.0.0.1:8765/api/auth/local',json.dumps({'code':cfg['server']['development_token']}).encode(),{'Content-Type':'application/json'})
 token=json.load(urllib.request.urlopen(req,timeout=5))['token']
-s=get('/api/status',token);events=get('/api/events?limit=50',token);points=get('/api/series?minutes=10',token)
+deadline=time.monotonic()+max(0,min(args.wait_seconds,60))
+while True:
+    s=get('/api/status',token)
+    if (s['state']=='online' and s['collector']['connected'] and s['latest'] and
+        all(n['online'] for n in s['latest']['nodes']) and s['diagnostic']):break
+    if time.monotonic()>=deadline:break
+    time.sleep(1)
+events=get('/api/events?limit=50',token);points=get('/api/series?minutes=10',token)
 print(json.dumps({'state':s['state'],'collector':s['collector'],'boot':s['latest']['boot'] if s['latest'] else None,
                   'nodes':s['latest']['nodes'] if s['latest'] else [],'diagnostic':s['diagnostic'],
                   'event_count':len(events['items']),'latest_points':len(points['items'])},ensure_ascii=False,indent=2))
