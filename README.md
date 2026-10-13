@@ -2,6 +2,8 @@
 
 微信原生小程序显示玄铁主站、星火传感从站、龙芯系统从站。后台持续订阅巴法 MQTT，把设备摘要、事件、掉线前读数保存到数据库；关闭小程序后仍继续记录。
 
+公开源码：[remukisama/d121-remote-monitor](https://github.com/remukisama/d121-remote-monitor)。云托管可绑定该仓库，分支为 `codex/wechat-cloud-20261012`，构建根目录、`Dockerfile`，端口 `8080`。运行密钥通过云端环境变量配置。
+
 项目目录：`D:\codex相关项目\D121远程监控小程序`。开发者工具导入 `miniprogram` 子目录，AppID 为 `wxed43ebee62798009`。当前仍是本机联调模式，尚未部署微信云托管，也未验证手机离开设备后访问。
 
 ## 已实现的使用流程
