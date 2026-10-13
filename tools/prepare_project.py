@@ -4,10 +4,12 @@ import json
 root=Path(__file__).resolve().parents[1]
 cfg=json.loads((root/'config.private.json').read_text(encoding='utf-8-sig'))
 mini=root/'miniprogram'; mini.mkdir(exist_ok=True)
-project=dict(description='D121 双从站远程监控与历史事件',projectname='D121远程监控',appid=cfg['wechat'].get('appid') or 'touristappid',
-             compileType='miniprogram',libVersion='latest',miniprogramRoot='./',
-             setting=dict(es6=True,enhance=True,minified=True,urlCheck=True,postcss=True),
-             packOptions=dict(ignore=[],include=[]))
+project_path=mini/'project.config.json'
+project=json.loads(project_path.read_text(encoding='utf-8-sig')) if project_path.exists() else {}
+project.update(description='D121 双从站远程监控与历史事件',projectname='D121远程监控',appid=cfg['wechat'].get('appid') or 'touristappid',
+               compileType='miniprogram',libVersion='latest',miniprogramRoot='./')
+project.setdefault('setting',{}).update(es6=True,enhance=True,minified=True,urlCheck=True,postcss=True)
+project.setdefault('packOptions',dict(ignore=[],include=[]))
 (mini/'project.config.json').write_text(json.dumps(project,ensure_ascii=False,indent=2),encoding='utf-8')
 deployment=cfg.get('deployment',{})
 env=deployment.get('cloud_env_id','')
