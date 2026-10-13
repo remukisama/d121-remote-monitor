@@ -2,6 +2,7 @@ const api=require('../../utils/api'),fmt=require('../../utils/format')
 function reading(event,node) {
   const value=event.snapshot ? event.snapshot.nodes[node-1] : null
   return value ? {temperature:fmt.numeric(value.temperature),humidity:fmt.numeric(value.humidity),
+    vibration:fmt.numeric(value.vibration,3),
     cpu:fmt.numeric(value.cpu),memory:fmt.numeric(value.memory_mb),load:fmt.numeric(value.load,2)} : null
 }
 function savedTime(event,node) {
@@ -17,7 +18,7 @@ Page({
       const value=await api.request('/api/events/'+this.id),node=value.node===2?2:1
       this.setData({event:Object.assign(fmt.event(value),{
         snapshotTime:savedTime(value,node),last:reading(value,node)
-      }),chartNode:node,metric:node===2?'cpu':'temperature',unit:node===2?'%':'℃',error:''})
+      }),chartNode:node,metric:node===2?'cpu':/振动/.test(value.title)?'vibration':'temperature',unit:node===2?'%':/振动/.test(value.title)?'g':'℃',error:''})
     }catch(error){this.setData({error:error.message})}
   },
   selectNode(e){

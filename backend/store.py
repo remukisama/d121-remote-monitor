@@ -4,6 +4,11 @@ from .protocol import diagnosis, NODE_NAMES
 
 def dump(value): return json.dumps(value, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
 
+SAMPLES_WITH_MOTION='''SELECT s.*,m.peak_mg AS motion_peak_mg,m.sample_count AS motion_sample_count
+ FROM samples s LEFT JOIN motions m ON m.id=(SELECT v.id FROM motions v
+ WHERE v.boot=s.boot AND v.collection=s.collection AND v.uptime=s.uptime
+ AND (s.boot<>0 OR ABS(v.stamp-s.stamp)<=5) ORDER BY v.stamp DESC,v.id DESC LIMIT 1)'''
+
 class Store:
     def __init__(self, path, device_id='d121-01', offline_seconds=15):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -26,6 +31,10 @@ class Store:
           CREATE INDEX IF NOT EXISTS samples_identity ON samples(boot,collection,uptime);
           CREATE TABLE IF NOT EXISTS diagnostics(id INTEGER PRIMARY KEY, stamp REAL, boot INTEGER, collection INTEGER, uptime REAL, payload TEXT);
           CREATE INDEX IF NOT EXISTS diagnostics_identity ON diagnostics(boot,collection,uptime);
+          CREATE TABLE IF NOT EXISTS motions(id INTEGER PRIMARY KEY,identity TEXT UNIQUE,stamp REAL NOT NULL,
+            boot INTEGER,collection INTEGER,uptime REAL,peak_mg INTEGER,sample_count INTEGER NOT NULL);
+          CREATE INDEX IF NOT EXISTS motions_identity ON motions(boot,collection,uptime);
+          CREATE INDEX IF NOT EXISTS motions_time ON motions(stamp);
           CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, identity TEXT UNIQUE, received REAL, occurred REAL,
             boot INTEGER, collection INTEGER, node INTEGER, uptime REAL, title TEXT, source TEXT,
             payload TEXT, snapshot TEXT, diagnostic TEXT, diagnosis TEXT, resolved REAL, anchor_uptime REAL, anchor_time REAL);
@@ -41,14 +50,28 @@ class Store:
             self.error = error
             if connected: self.link_since = time.monotonic()
 
+    @staticmethod
+    def sample_frame(row):
+        value=json.loads(row['payload']);star=value['nodes'][0]
+        peak,count=row['motion_peak_mg'],row['motion_sample_count']
+        valid=value['running'] and star['online'] and star['fresh'] and star['flags']&33==33 and not star['flags']&16
+        star['vibration']=peak/1000 if valid and peak is not None and count else None
+        star['vibration_samples']=count or 0
+        return dict(value,received_at=row['stamp'],retained=bool(row['retained']))
+
     def latest(self):
-        row = self.db.execute('SELECT * FROM samples ORDER BY stamp DESC,id DESC LIMIT 1').fetchone()
+        row = self.db.execute(SAMPLES_WITH_MOTION+' ORDER BY s.stamp DESC,s.id DESC LIMIT 1').fetchone()
         if not row: return None
-        return dict(json.loads(row['payload']), received_at=row['stamp'], retained=bool(row['retained']))
+        return self.sample_frame(row)
 
     def ingest(self, kind, value, stamp=None, retained=False):
         stamp = time.time() if stamp is None else stamp
         with self.lock, self.db:
+            if kind=='motion':
+                identity=(f"{value['boot']}:{value['collection']}:{value['uptime_s']}" if value['boot'] else f"uncertain:{stamp}")
+                self.db.execute('INSERT OR IGNORE INTO motions(identity,stamp,boot,collection,uptime,peak_mg,sample_count) VALUES(?,?,?,?,?,?,?)',
+                    (identity,stamp,value['boot'],value['collection'],value['uptime_s'],value['peak_mg'],value['sample_count']))
+                return # A motion packet alone does not refresh the master heartbeat.
             if kind == 'diagnostic':
                 self.db.execute('INSERT INTO diagnostics(stamp,boot,collection,uptime,payload) VALUES(?,?,?,?,?)',
                     (stamp, value['boot'], value['collection'], value['uptime_s'], dump(value)))
@@ -84,19 +107,19 @@ class Store:
         if self.db.execute('SELECT 1 FROM events WHERE identity=?',(value['identity'],)).fetchone(): return
         # Capture the last cloud-observed valid sample from the same boot and collection BEFORE the event.
         boot, collection, uptime, node = value['boot'], value['collection'], value['uptime_s'], value['node']
-        row = self.db.execute('SELECT * FROM samples WHERE boot=? AND collection=? AND uptime<=? ORDER BY uptime DESC,id DESC LIMIT 1',
+        row = self.db.execute(SAMPLES_WITH_MOTION+' WHERE s.boot=? AND s.collection=? AND s.uptime<=? ORDER BY s.uptime DESC,s.id DESC LIMIT 1',
                               (boot, collection, uptime)).fetchone()
         snapshot = None
         if row:
-            candidate = json.loads(row['payload'])
+            candidate = self.sample_frame(row)
             # Find last usable node data if the immediate frame already says offline.
-            rows = self.db.execute('SELECT * FROM samples WHERE boot=? AND collection=? AND uptime<=? ORDER BY uptime DESC,id DESC LIMIT 180',
+            rows = self.db.execute(SAMPLES_WITH_MOTION+' WHERE s.boot=? AND s.collection=? AND s.uptime<=? ORDER BY s.uptime DESC,s.id DESC LIMIT 180',
                                     (boot, collection, uptime)).fetchall()
             def usable(n):
-                fields=('temperature','humidity') if n['node']==1 else ('cpu','memory_mb','load','uptime_s')
+                fields=('temperature','humidity','vibration') if n['node']==1 else ('cpu','memory_mb','load','uptime_s')
                 return n['online'] and n['fresh'] and any(n.get(field) is not None for field in fields)
             for prior in rows:
-                candidate = json.loads(prior['payload'])
+                candidate = self.sample_frame(prior)
                 good = candidate['running'] and (any(usable(n) for n in candidate['nodes']) if node==0 else
                     usable(candidate['nodes'][node-1]))
                 if good:
@@ -107,7 +130,7 @@ class Store:
                 snapshot['node_received_at']=[None,None]
                 for position in (0,1):
                     for prior in rows:
-                        candidate=json.loads(prior['payload'])
+                        candidate=self.sample_frame(prior)
                         if candidate['running'] and usable(candidate['nodes'][position]):
                             snapshot['nodes'][position]=dict(candidate['nodes'][position])
                             snapshot['node_received_at'][position]=prior['stamp'];break
@@ -189,9 +212,9 @@ class Store:
             row=self.db.execute('SELECT * FROM events WHERE id=?',(identity,)).fetchone()
             if not row: return None
             result=self.event_view(row)
-            points=self.db.execute('SELECT stamp,payload FROM samples WHERE boot=? AND collection=? AND uptime BETWEEN ? AND ? ORDER BY uptime LIMIT 181',
+            points=self.db.execute(SAMPLES_WITH_MOTION+' WHERE s.boot=? AND s.collection=? AND s.uptime BETWEEN ? AND ? ORDER BY s.uptime LIMIT 181',
                                    (row['boot'],row['collection'],max(0,row['uptime']-60),row['uptime']+30)).fetchall()
-            result['points']=[dict(json.loads(p['payload']), received_at=p['stamp']) for p in points]
+            result['points']=[self.sample_frame(p) for p in points]
             result['available_points']=len(points)
             result['sample_note']='云端约每秒摘要；未上传的六轴原始波形和断网期间样本不在这里'
             return result
@@ -199,9 +222,9 @@ class Store:
     def series(self, minutes=10):
         with self.lock:
             # Latest bounded window, then chronological ordering; do not return the oldest 600 samples of a day.
-            rows=self.db.execute('SELECT stamp,payload FROM samples WHERE stamp>=? ORDER BY stamp DESC LIMIT 600',
+            rows=self.db.execute(SAMPLES_WITH_MOTION+' WHERE s.stamp>=? ORDER BY s.stamp DESC LIMIT 600',
                                   (time.time()-minutes*60,)).fetchall()
-            return [dict(json.loads(r['payload']),received_at=r['stamp']) for r in reversed(rows)]
+            return [self.sample_frame(r) for r in reversed(rows)]
 
     def prune(self, days):
         with self.lock, self.db:
@@ -209,6 +232,7 @@ class Store:
             # Preserve samples around every retained event for the configured history duration.
             self.db.execute('DELETE FROM samples WHERE stamp<?',(cutoff,))
             self.db.execute('DELETE FROM diagnostics WHERE stamp<?',(cutoff,))
+            self.db.execute('DELETE FROM motions WHERE stamp<?',(cutoff,))
             self.db.execute('DELETE FROM events WHERE received<?',(cutoff,))
             self.db.execute('DELETE FROM sessions WHERE expires<?',(time.time(),))
 

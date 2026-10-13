@@ -9,7 +9,7 @@
       <view class="row"><text>{{item.name}}</text><text class="pill {{item.tone}}">{{item.label}}</text></view>
       <view wx:if="{{item.node===1}}" class="grid"><view class="metric"><view class="metric-label">环境温度</view><text class="value">{{item.temperatureText}}</text><text class="unit">℃</text></view><view class="metric"><view class="metric-label">相对湿度</view><text class="value">{{item.humidityText}}</text><text class="unit">%</text></view></view>
       <view wx:else class="grid"><view class="metric"><view class="metric-label">CPU 使用率</view><text class="value">{{item.cpuText}}</text><text class="unit">%</text></view><view class="metric"><view class="metric-label">已用内存</view><text class="value">{{item.memoryText}}</text><text class="unit">MB</text></view></view>
-      <view class="row sub"><text>{{item.node===1?'查看温湿度变化':'运行 '+item.uptimeText}}</text><text class="link" bindtap="trends">查看趋势 →</text></view>
+      <view class="row sub"><text>{{item.node===1?'振动峰值 '+item.vibrationText+' g':'运行 '+item.uptimeText}}</text><text class="link" data-node="{{item.node}}" bindtap="trends">查看趋势 →</text></view>
     </view>
     <view wx:if="{{!status.nodes.length}}" class="empty"><view class="empty-title">等待设备第一次上传</view><view>后台接收服务准备好后，这里会显示真实读数。</view></view>
     <view class="row section-title"><text>最近发生了什么</text><text class="link sub" bindtap="allEvents">全部事件 →</text></view>

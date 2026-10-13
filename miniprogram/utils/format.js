@@ -23,7 +23,7 @@ function status(value) {
   const nodes = (value.latest ? value.latest.nodes : []).map(n => Object.assign({}, n, {
     label: !current ? '最后已知状态' : !value.latest.running ? '采集已停止' : !n.online ? '通信中断' : !n.fresh ? '数据未更新' : '在线',
     tone: !current || !n.online ? 'bad' : !n.fresh || !value.latest.running ? 'warn' : '',
-    temperatureText: numeric(n.temperature), humidityText: numeric(n.humidity), cpuText: numeric(n.cpu),
+    temperatureText: numeric(n.temperature), humidityText: numeric(n.humidity), vibrationText:numeric(n.vibration,3), cpuText: numeric(n.cpu),
     memoryText: numeric(n.memory_mb), loadText: numeric(n.load, 2), uptimeText: duration(n.uptime_s)
   }))
   return Object.assign({}, value, { label: labels[value.state], current, nodes,
