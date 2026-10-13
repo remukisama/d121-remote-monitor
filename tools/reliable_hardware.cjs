@@ -53,7 +53,6 @@ async function main(){
   report.incident=d;report.recovery=up[0]
   if(!d.snapshot?.replayed||!d.snapshot.nodes[0].online||!Number.isFinite(d.snapshot.nodes[0].temperature))throw new Error('Original pre-outage context was not archived')
   if(d.snapshot.boot!==pre.boot||d.snapshot.collection!==pre.collection||d.snapshot.uptime_s>d.uptime)throw new Error('Snapshot identity or original ordering changed')
-  report.incident=d;report.recovery=up[0]
   pass('MySQL saved one original outage/recovery pair and replayed pre-outage readings',{incident_id:d.id,recovery_id:up[0].id,original_boot:d.boot,collection:d.collection,vibration:d.snapshot.nodes[0].vibration})
   await pause(3500)
   const again=(await request('/api/events?node=1&limit=50')).items.filter(e=>e.id>pre.last_id&&e.boot===pre.boot&&e.collection===pre.collection&&e.source==='device')
