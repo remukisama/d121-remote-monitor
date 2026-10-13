@@ -1,0 +1,7 @@
+{
+  "bemfa": {"host": "bemfa.com", "port": 9503, "tls": true, "client_id": "d121-cloud-archive", "username": "", "password": "", "uid": "", "state_topic": "d121state", "event_topic": "d121event"},
+  "wechat": {"appid": "", "appsecret": "", "allowed_openids": []},
+  "server": {"public_url": "", "device_id": "d121-01", "device_name": "我的监控终端", "offline_seconds": 15, "retention_days": 30, "session_hours": 24, "local_dev": true, "development_token": "", "pairing_code": "", "database_driver": "sqlite", "database": "data/monitor.db"},
+  "mysql": {"database": "d121_monitor"},
+  "deployment": {"cloud_env_id": "", "cloud_service": "d121-monitor"}
+}

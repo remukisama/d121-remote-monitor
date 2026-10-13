@@ -1,0 +1,20 @@
+<view class="page">
+  <view class="eyebrow">D121 · 云端监控</view><view class="title"><view>设备不在身边，</view><view>状态也看得见。</view></view>
+  <view wx:if="{{error}}" class="notice error">{{error}}</view>
+  <view wx:if="{{loading}}" class="empty">正在读取云端记录…</view>
+  <view wx:if="{{status}}">
+    <view class="hero"><view class="row"><text class="hero-title">{{status.device_name}}</text><text class="pill {{status.current?'':'bad'}}">{{status.label}}</text></view><view class="sub spaced">最后收到数据：{{status.lastText}}</view><view class="row sub spaced"><text>{{status.collectingText}}</text><text>{{status.storageText}}</text></view></view>
+    <view wx:if="{{!status.current}}" class="notice">以下是最后保存的读数，不代表设备现在的状态。{{status.collector.error || '主站暂无新数据，掉线前数据已保留。'}}</view>
+    <view wx:for="{{status.nodes}}" wx:key="node" class="card {{!status.current?'dim':''}}">
+      <view class="row"><text>{{item.name}}</text><text class="pill {{item.tone}}">{{item.label}}</text></view>
+      <view wx:if="{{item.node===1}}" class="grid"><view class="metric"><view class="metric-label">环境温度</view><text class="value">{{item.temperatureText}}</text><text class="unit">℃</text></view><view class="metric"><view class="metric-label">相对湿度</view><text class="value">{{item.humidityText}}</text><text class="unit">%</text></view></view>
+      <view wx:else class="grid"><view class="metric"><view class="metric-label">CPU 使用率</view><text class="value">{{item.cpuText}}</text><text class="unit">%</text></view><view class="metric"><view class="metric-label">已用内存</view><text class="value">{{item.memoryText}}</text><text class="unit">MB</text></view></view>
+      <view class="row sub"><text>{{item.node===1?'查看温湿度变化':'运行 '+item.uptimeText}}</text><text class="link" bindtap="trends">查看趋势 →</text></view>
+    </view>
+    <view wx:if="{{!status.nodes.length}}" class="empty"><view class="empty-title">等待设备第一次上传</view><view>后台接收服务准备好后，这里会显示真实读数。</view></view>
+    <view class="row section-title"><text>最近发生了什么</text><text class="link sub" bindtap="allEvents">全部事件 →</text></view>
+    <view wx:for="{{events}}" wx:key="id" class="card event" data-id="{{item.id}}" bindtap="openEvent"><view class="event-icon {{item.bad?'bad':''}}"/><view class="event-body"><view class="row"><text class="event-title">{{item.title}}</text><text class="arrow">›</text></view><view class="sub">{{item.name}}</view><view class="time">{{item.timeText}}</view></view></view>
+    <view wx:if="{{!events.length}}" class="card sub">还没有云端历史事件。后台会在小程序关闭时继续记录。</view>
+    <view class="footer-note">云端保存约每秒上传的摘要。未上传的数据不会被补画成真实曲线；历史默认保留 {{status.retention_days}} 天。</view>
+  </view>
+</view>

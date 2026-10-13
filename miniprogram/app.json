@@ -1,0 +1,7 @@
+{
+  "pages": ["pages/home/index", "pages/trends/index", "pages/events/index", "pages/device/index", "pages/detail/index", "pages/login/index"],
+  "window": {"navigationBarBackgroundColor": "#171c24", "navigationBarTextStyle": "white", "navigationBarTitleText": "D121 远程监控", "backgroundColor": "#11151c", "backgroundTextStyle": "light"},
+  "tabBar": {"color": "#8794a6", "selectedColor": "#50dfc5", "backgroundColor": "#171c24", "borderStyle": "black", "list": [{"pagePath": "pages/home/index", "text": "总览"}, {"pagePath": "pages/trends/index", "text": "趋势"}, {"pagePath": "pages/events/index", "text": "事件"}, {"pagePath": "pages/device/index", "text": "设备"}]},
+  "usingComponents": {"metric-chart": "/components/metric-chart/index"},
+  "style": "v2", "sitemapLocation": "sitemap.json"
+}
