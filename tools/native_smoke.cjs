@@ -23,7 +23,8 @@ async function main() {
   await mini.evaluate(t => { wx.setStorageSync('d121_session', t); getApp().globalData.token=t;return true }, token)
   console.log('Local test session applied (credential hidden)')
   // Explicit JSON results avoid this IDE version's Page.getData/callWxMethod bridge timeout.
-  const route=async(method,url)=>{if(method==='switchTab')await mini.evaluate(u=>{wx.switchTab({url:u});return true},url);else await mini.evaluate(u=>{wx.navigateTo({url:u});return true},url);await pause(3000)}
+  // Fresh routes keep this IDE's cached tab stacks from returning another page's data.
+  const route=async(method,url)=>{await mini.evaluate(u=>{wx.reLaunch({url:u});return true},url);await pause(3000)}
   const pageData=async()=>JSON.parse(await mini.evaluate(()=>{const pages=getCurrentPages();return JSON.stringify(pages[pages.length-1].data)}))
   const callPage=(method,arg)=>mini.evaluate(v=>{const pages=getCurrentPages();pages[pages.length-1][v.method](v.arg);return true},{method,arg:arg||null})
   await route('switchTab','/pages/home/index'); await pause(1000)
@@ -68,8 +69,6 @@ async function main() {
       console.log('PASS native master outage detail: both node snapshots and curves selectable')
     }
   } else console.log('Native event list is empty; controlled hardware incident test pending')
-  // Follow the visible UI: leave detail with Back before selecting a bottom tab.
-  await mini.evaluate(()=>{wx.navigateBack();return true});await pause(2000)
   await route('switchTab','/pages/device/index');await pause(1000)
   const device=await pageData()
   if(device.error || !device.status || !device.status.diagnostic)throw new Error('Device diagnostics unavailable')
