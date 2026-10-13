@@ -1,0 +1,1 @@
+<view class="chart-wrap"><canvas type="2d" id="plot" class="plot"/><view wx:if="{{!hasValues}}" class="chart-empty">这段时间没有有效读数</view></view>

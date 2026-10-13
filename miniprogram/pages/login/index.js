@@ -1,0 +1,2 @@
+const api=require('../../utils/api')
+Page({data:{pairing:'',error:'',busy:false},input(e){this.setData({pairing:e.detail.value})},async login(){this.setData({busy:true,error:''});try{const {code}=await new Promise((resolve,reject)=>wx.login({success:resolve,fail:reject}));const value=await api.request('/api/auth/wechat','POST',{code,pairing_code:this.data.pairing});api.saveSession(value);wx.switchTab({url:'/pages/home/index'})}catch(e){this.setData({error:e.message||'登录暂未完成，请重试'})}finally{this.setData({busy:false})}}})

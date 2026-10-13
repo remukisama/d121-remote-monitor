@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+*.private.json
+*.private.js
+project.private.config.json
+data/
+output/
+.pytest_cache/
+.env
