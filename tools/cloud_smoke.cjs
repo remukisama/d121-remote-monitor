@@ -34,7 +34,13 @@ async function main() {
   function pass(name,value) { report.checks.push({name,...value}); console.log('PASS '+name+': '+JSON.stringify(value)) }
   async function login(pairing) {
     await mini.evaluate(()=>{wx.reLaunch({url:'/pages/login/index'});return true})
-    await pause(1500)
+    let ready=false
+    for(let i=0;i<40;i++) {
+      ready=await mini.evaluate(()=>{const p=getCurrentPages(),page=p[p.length-1];return !!page&&page.route==='pages/login/index'&&typeof page.login==='function'})
+      if(ready)break
+      await pause(250)
+    }
+    if(!ready)throw new Error('Login page did not settle')
     await mini.evaluate(pairing=>{const pages=getCurrentPages(),page=pages[pages.length-1];page.setData({pairing});page.login();return true},pairing)
     for(let i=0;i<50;i++) {
       await pause(500)

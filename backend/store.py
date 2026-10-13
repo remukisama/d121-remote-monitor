@@ -184,11 +184,19 @@ class Store:
             if prior:diag=json.loads(prior['payload'])
         # A state transition and its following hardware event represent the same incident.
         if value['source'] == 'device':
-            old = self.db.execute("SELECT id FROM events WHERE boot=? AND collection=? AND node=? AND title=? AND source='observed' AND ABS(uptime-?)<=5 ORDER BY id DESC LIMIT 1",
+            old = self.db.execute("SELECT id,snapshot,diagnostic FROM events WHERE boot=? AND collection=? AND node=? AND title=? AND source='observed' AND ABS(uptime-?)<=5 ORDER BY id DESC LIMIT 1",
                                   (boot, collection, node, value['title'], uptime)).fetchone()
             if old:
-                self.db.execute('UPDATE events SET identity=?,payload=?,source=?,uptime=? WHERE id=?',
-                                 (value['identity'],dump(value),'device',uptime,old['id']))
+                prior=json.loads(old['snapshot']) if old['snapshot'] else None
+                # State may reveal the transition before its original event arrives.
+                # Merge the identity without losing the newer durable pre-event context.
+                if prior and (not snapshot or prior['uptime_s']>=snapshot['uptime_s']):
+                    snapshot=prior;diag=json.loads(old['diagnostic']) if old['diagnostic'] else None
+                self.db.execute('''UPDATE events SET identity=?,payload=?,source=?,uptime=?,occurred=?,
+                    snapshot=?,diagnostic=?,diagnosis=?,anchor_uptime=?,anchor_time=? WHERE id=?''',
+                    (value['identity'],dump(value),'device',uptime,occurred,dump(snapshot) if snapshot else None,
+                     dump(diag) if diag else None,dump(diagnosis(value,snapshot,diag)),
+                     anchor['uptime'] if anchor else None,anchor['stamp'] if anchor else None,old['id']))
                 return
         if value['source']=='observed' and self.db.execute("SELECT 1 FROM events WHERE boot=? AND collection=? AND node=? AND title=? AND source='device' AND ABS(uptime-?)<=5",
                  (boot,collection,node,value['title'],uptime)).fetchone(): return

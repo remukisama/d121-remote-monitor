@@ -46,6 +46,21 @@ def test_replay_cannot_use_context_from_a_different_boot_or_collection(tmp_path)
     for args in [dict(boot=2),dict(col=2),dict(t=13)]:s.ingest(*context(**args))
     s.ingest(*event());assert s.event_rows()[0]['snapshot'] is None;s.close()
 
+def test_observed_incident_merge_keeps_original_id_and_newer_replayed_context(tmp_path):
+    s=Store(tmp_path/'merged.db');stamp=time.time()
+    s.ingest('state',state(5),stamp)
+    offline=state(12);offline['nodes'][0]['online']=False;offline['nodes'][0]['fresh']=False
+    s.ingest('state',offline,stamp+7)
+    original=s.event_rows()[0];assert original['source']=='observed' and original['snapshot']['uptime_s']==5
+    for kind in (5,7,8):s.ingest(*context(kind,t=10),stamp+9)
+    s.ingest(*event(),stamp+10);s.ingest(*event(),stamp+11)
+    d=s.event_detail(original['id'])
+    assert len(s.event_rows())==1 and d['source']=='device' and d['uptime']==12
+    assert d['received']==original['received'] and d['snapshot']['replayed'] and d['snapshot']['uptime_s']==10
+    assert d['snapshot']['nodes'][0]['temperature']==0 and d['snapshot']['nodes'][0]['vibration']==0
+    assert d['diagnostic']['storage']=='TF 卡' and d['diagnosis']['confidence']=='原因尚未确认'
+    s.close()
+
 @pytest.mark.parametrize('values',[[1,1,1],[1,1,5,1],[True,1,1,7],[1,1,1,-1]])
 def test_invalid_ack_is_rejected(values):
     with pytest.raises(ValueError):decode('event',json.dumps(dict(v=6,d=values)).encode(),CFG)
