@@ -48,6 +48,15 @@ def decode(topic, raw, cfg):
             raise ValueError('Unknown event')
         return 'event', dict(boot=boot, collection=collection, node=node, run=run, session=session, event_id=identity,
                              type=kind, title=EVENT_NAMES[node][kind], uptime_s=uptime_ms / 1000)
+    # Motion is a separate short packet so existing v2 telemetry stays compatible.
+    if topic == cfg['event_topic'] and value.get('v') == 4:
+        if len(d) != 5: raise ValueError('Malformed motion summary')
+        boot,collection,uptime,peak,count=d
+        for x in (boot,collection,uptime): integer(x)
+        integer(count,0,12)
+        peak=metric(peak,1,0,2500)
+        if (count==0)!=(peak is None): raise ValueError('Invalid motion sample count')
+        return 'motion',dict(boot=boot,collection=collection,uptime_s=uptime,peak_mg=peak,sample_count=count)
     # Diagnostics share the event topic and use their own version discriminator.
     if topic == cfg['event_topic'] and value.get('v') == 3:
         if len(d) != 10: raise ValueError('Malformed diagnostic')

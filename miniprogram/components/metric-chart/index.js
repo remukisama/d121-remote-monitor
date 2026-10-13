@@ -27,11 +27,11 @@ Component({
         this.setData({ hasValues: good.length > 0 })
         const left = 38, right = w - 10, top = 18, bottom = h - 27
         let lo = good.length ? Math.min(...good.map(p => p.v)) : 0, hi = good.length ? Math.max(...good.map(p => p.v)) : 1
-        const padding = Math.max((hi - lo) * .18, this.data.field === 'load' ? .05 : 1)
+        const padding = Math.max((hi - lo) * .18, field === 'vibration' ? .005 : field === 'load' ? .05 : 1)
         lo -= padding; hi += padding
         if (field !== 'temperature') lo = Math.max(0, lo)
         ctx.font = '10px sans-serif'; ctx.strokeStyle = '#303b4c'; ctx.fillStyle = '#8c9fb8'; ctx.lineWidth = 1
-        for (let i = 0; i < 4; i++) { const y = top + (bottom - top) * i / 3; ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke(); ctx.fillText((hi - (hi - lo) * i / 3).toFixed(1), 0, y + 3) }
+        for (let i = 0; i < 4; i++) { const y = top + (bottom - top) * i / 3; ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke(); ctx.fillText((hi - (hi - lo) * i / 3).toFixed(field==='vibration'?3:1), 0, y + 3) }
         if (!values.length) return
         const start = values[0].t, finish = values[values.length - 1].t, span = Math.max(finish - start, 1)
         const x = t => left + (right - left) * (t - start) / span, y = v => bottom - (bottom - top) * (v - lo) / (hi - lo)

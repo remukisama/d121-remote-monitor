@@ -14,5 +14,8 @@ Page({
   },
   openEvent(e) { wx.navigateTo({ url: '/pages/detail/index?id=' + e.currentTarget.dataset.id }) },
   allEvents() { wx.switchTab({ url: '/pages/events/index' }) },
-  trends() { wx.switchTab({ url: '/pages/trends/index' }) }
+  trends(e) {
+    getApp().globalData.pendingTrendNode=Number(e.currentTarget.dataset.node)===2?2:1
+    wx.switchTab({ url: '/pages/trends/index' })
+  }
 })

@@ -23,5 +23,25 @@ async function run(){
  assert.equal(page.data.node,1);assert.equal(page.data.items[0].node,1)
  assert.equal(page.data.loading,false)
  console.log('PASS: valid zero values, UTC+8 labels and event filter race with reordered responses')
+ const app={globalData:{}},tabs=[]
+ global.getApp=()=>app;global.wx={switchTab:value=>tabs.push(value.url)}
+ require.cache[apiPath].exports.request=async()=>({items:[]})
+ require('../miniprogram/pages/home/index')
+ const home=Object.assign({},definition)
+ require('../miniprogram/pages/trends/index')
+ const trends=Object.assign({},definition,{data:Object.assign({},definition.data),setData(value){Object.assign(this.data,value)}})
+ for(const node of [2,1,2]) {
+   home.trends({currentTarget:{dataset:{node:String(node)}}})
+   assert.equal(tabs[tabs.length-1],'/pages/trends/index')
+   trends.onShow();trends.onHide()
+   assert.equal(trends.data.node,node)
+   assert.equal(trends.data.metric,node===2?'cpu':'temperature')
+   assert.equal(app.globalData.pendingTrendNode,undefined)
+ }
+ trends.selectNode({currentTarget:{dataset:{node:'1'}}})
+ assert.ok(trends.data.metrics.some(metric=>metric.key==='vibration'))
+ trends.selectMetric({currentTarget:{dataset:{metric:'vibration'}}})
+ assert.equal(trends.data.unit,'g')
+ console.log('PASS: both overview entries select the right node on a cached trend page; vibration is selectable')
 }
 run().catch(e=>{console.error(e);process.exit(1)})

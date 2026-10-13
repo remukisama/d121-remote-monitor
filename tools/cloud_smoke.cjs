@@ -32,6 +32,18 @@ async function main() {
     throw new Error('Cloud response timeout: '+url)
   }
   function pass(name,value) { report.checks.push({name,...value}); console.log('PASS '+name+': '+JSON.stringify(value)) }
+  async function login(pairing) {
+    await mini.evaluate(()=>{wx.reLaunch({url:'/pages/login/index'});return true})
+    await pause(1500)
+    await mini.evaluate(pairing=>{const pages=getCurrentPages(),page=pages[pages.length-1];page.setData({pairing});page.login();return true},pairing)
+    for(let i=0;i<50;i++) {
+      await pause(500)
+      const value=JSON.parse(await mini.evaluate(()=>{const pages=getCurrentPages(),page=pages[pages.length-1];return JSON.stringify({authenticated:!!getApp().globalData.token,error:page.data.error,busy:page.data.busy})}))
+      if(value.authenticated)return
+      if(value.error && !value.busy)throw new Error('Real WeChat login failed: '+value.error)
+    }
+    throw new Error('Real WeChat login timeout')
+  }
   try {
     const route=JSON.parse(await mini.evaluate(()=>JSON.stringify(getApp().globalData.config)))
     if(route.mode!=='cloud' || route.envId!==cfg.deployment.cloud_env_id || route.service!==cfg.deployment.cloud_service)throw new Error('Simulator has not recompiled the cloud routing settings')
@@ -51,17 +63,7 @@ async function main() {
     if(upstream.status===503)throw new Error('Cloud WeChat upstream unavailable: '+(upstream.data.diagnostic_code||'diagnostic update not deployed'))
     if(upstream.status!==401)throw new Error('Unexpected invalid-code response: '+upstream.status)
     pass('WeChat upstream reachable',{status:upstream.status})
-    await mini.evaluate(()=>{wx.reLaunch({url:'/pages/login/index'});return true})
-    await pause(1500)
-    await mini.evaluate(pairing=>{const pages=getCurrentPages(),page=pages[pages.length-1];page.setData({pairing});page.login();return true},cfg.server.pairing_code)
-    let authenticated=false
-    for(let i=0;i<50;i++) {
-      await pause(500)
-      const value=JSON.parse(await mini.evaluate(()=>{const pages=getCurrentPages(),page=pages[pages.length-1];return JSON.stringify({authenticated:!!getApp().globalData.token,error:page.data.error,busy:page.data.busy})}))
-      if(value.authenticated){authenticated=true;break}
-      if(value.error && !value.busy)throw new Error('Real WeChat login failed: '+value.error)
-    }
-    if(!authenticated)throw new Error('Real WeChat login timeout')
+    await login(cfg.server.pairing_code)
     pass('real WeChat login and pairing',{authenticated:true})
     const status=await request('/api/status')
     if(status.status!==200)throw new Error('Cloud device status failed')
@@ -69,9 +71,15 @@ async function main() {
     const nodes=status.data.latest?.nodes||[]
     pass('cloud device status',{state:status.data.state,collector:status.data.collector,node_count:nodes.length})
     if(nodes.length!==2 || nodes.some(node=>!node.online || !node.fresh))throw new Error('Both cloud nodes are not reporting fresh live data')
+    const star=nodes.find(node=>node.node===1)
+    if(!star || !Number.isFinite(star.vibration) || !(star.vibration_samples>0))throw new Error('Real Star vibration packets not joined to cloud samples')
+    pass('cloud live vibration',{peak_g:star.vibration,valid_samples:star.vibration_samples})
     const series=await request('/api/series?minutes=10')
     if(series.status!==200)throw new Error('Cloud archived samples failed')
     pass('cloud archived samples',{count:series.data.items.length})
+    const motionPoints=series.data.items.filter(p=>Number.isFinite(p.nodes?.[0]?.vibration))
+    if(!motionPoints.length)throw new Error('MySQL archived vibration series is empty')
+    pass('cloud archived vibration',{count:motionPoints.length})
     const events=await request('/api/events?limit=20')
     if(events.status!==200)throw new Error('Cloud archived events failed')
     pass('cloud archived events',{count:events.data.items.length})
@@ -85,6 +93,16 @@ async function main() {
     const next=await request('/api/status')
     if(next.status!==200 || next.data.state!=='online' || !next.data.collector.connected || next.data.collector.received<=initialReceived || !series.data.items.length)throw new Error('Cloud receiver is not continuously archiving live device packets: '+JSON.stringify(next.data.collector))
     pass('continuous cloud reception',{received_before:initialReceived,received_after:next.data.collector.received})
+    // Hide polling tabs while testing token revocation and persisted membership.
+    await mini.evaluate(()=>{wx.reLaunch({url:'/pages/login/index'});return true})
+    await pause(500)
+    const logout=await request('/api/auth/logout','POST')
+    if(logout.status!==200 || (await request('/api/status')).status!==401)throw new Error('Cloud logout did not revoke the old session')
+    await mini.evaluate(()=>{getApp().globalData.token='';wx.removeStorageSync('d121_session');return true})
+    pass('cloud logout revokes old session',{revoked:true})
+    await login('')
+    if((await request('/api/status')).status!==200)throw new Error('Previously paired WeChat could not access the device after login')
+    pass('paired owner can log in again without pairing code',{authenticated:true})
     report.success=true
   } catch(error) {
     report.success=false;report.error=String(error.message);throw error

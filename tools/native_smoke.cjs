@@ -12,16 +12,25 @@ function capture(name) {
 }
 async function main() {
   const cfg = JSON.parse(fs.readFileSync(path.join(root, 'config.private.json'), 'utf8').replace(/^\uFEFF/, ''))
-  const response = await fetch('http://127.0.0.1:8765/api/auth/local', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({code:cfg.server.development_token}) })
-  if (!response.ok) throw new Error('Local login failed')
-  const { token } = await response.json()
+  const routeConfig=require('../miniprogram/config')
+  let token
+  if(routeConfig.mode!=='cloud') {
+    const response = await fetch('http://127.0.0.1:8765/api/auth/local', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({code:cfg.server.development_token}) })
+    if (!response.ok) throw new Error('Local login failed')
+    token=(await response.json()).token
+  }
   const mini = await automator.connect({ wsEndpoint: 'ws://127.0.0.1:9420' })
   console.log('Native automation connected')
   const errors = []
   mini.on('exception', e => errors.push(String(e.message || 'Simulator exception')))
   // The IDE bridge needs a serializable return value to acknowledge evaluate.
-  await mini.evaluate(t => { wx.setStorageSync('d121_session', t); getApp().globalData.token=t;return true }, token)
-  console.log('Local test session applied (credential hidden)')
+  if(routeConfig.mode==='cloud') {
+    if(!await mini.evaluate(()=>!!getApp().globalData.token))throw new Error('Run cloud_smoke.cjs to complete real WeChat login first')
+    console.log('Using the verified WeChat cloud session (credential hidden)')
+  } else {
+    await mini.evaluate(t => { wx.setStorageSync('d121_session', t); getApp().globalData.token=t;return true }, token)
+    console.log('Local test session applied (credential hidden)')
+  }
   // Explicit JSON results avoid this IDE version's Page.getData/callWxMethod bridge timeout.
   // Fresh routes keep this IDE's cached tab stacks from returning another page's data.
   const route=async(method,url)=>{await mini.evaluate(u=>{wx.reLaunch({url:u});return true},url);await pause(3000)}
@@ -33,11 +42,25 @@ async function main() {
   if (data.error || !data.status || data.status.state !== 'online' || data.status.nodes.length !== 2) throw new Error('Home did not show two live cloud nodes: '+(data.error || 'state missing'))
   capture('home')
   console.log('PASS native overview: two actual live cloud nodes')
-  await route('switchTab','/pages/trends/index'); await pause(3000)
+  // Exercise the actual overview callback and switchTab/onShow, including the cached tab.
+  for(const node of [2,1,2,1]) {
+    await callPage('trends',{currentTarget:{dataset:{node}}});await pause(1800)
+    data=await pageData()
+    if(data.node!==node || data.metric!==(node===2?'cpu':'temperature'))throw new Error('Overview selected the wrong trend node: '+node)
+    if(node===1 && !data.metrics.some(x=>x.key==='vibration'))throw new Error('Star vibration selector missing')
+    await mini.evaluate(()=>{wx.switchTab({url:'/pages/home/index'});return true});await pause(600)
+  }
+  console.log('PASS native overview navigation: correct Star/Loongson node on fresh and cached trend tabs')
+  await callPage('trends',{currentTarget:{dataset:{node:1}}});await pause(2500)
   data=await pageData()
   if (data.error || !data.points.length) throw new Error('Trend data missing')
   capture('trends')
   console.log('PASS native trends: '+data.points.length+' archived real samples')
+  await callPage('selectMetric',{currentTarget:{dataset:{metric:'vibration'}}});await pause(600)
+  data=await pageData()
+  if(data.metric!=='vibration'||data.unit!=='g'||!data.points.some(p=>Number.isFinite(p.nodes?.[0]?.vibration)))throw new Error('Archived real vibration data missing from Star trend')
+  capture('trends-vibration')
+  console.log('PASS native Star vibration trend: real archived values, unit g')
   await route('switchTab','/pages/events/index'); await pause(2000)
   data=await pageData()
   capture('events')
@@ -50,9 +73,9 @@ async function main() {
   }
   await callPage('filter',{currentTarget:{dataset:{node:'2'}}});await pause(1000)
   const filtered=await pageData()
-  if(filtered.node!==2 || !filtered.items.length || filtered.items.some(e=>e.node!==2))throw new Error('Loongson event filter failed')
+  if(filtered.error || filtered.node!==2 || filtered.items.some(e=>e.node!==2))throw new Error('Loongson event filter failed')
   capture('events-loongson')
-  console.log('PASS native Loongson event filter')
+  console.log('PASS native Loongson event filter: '+filtered.items.length+' archived events')
   await callPage('filter',{currentTarget:{dataset:{node:'0'}}});await pause(1000)
   data=await pageData()
   if (data.items.length) {
