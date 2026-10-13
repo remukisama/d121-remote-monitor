@@ -8,15 +8,15 @@ def migrate(source,destination):
     # SQLite backup includes committed WAL data and gives a consistent read snapshot.
     snapshot=sqlite3.connect(':memory:');snapshot.row_factory=sqlite3.Row
     with sqlite3.connect(source) as original: original.backup(snapshot)
-    tables=('samples','diagnostics','events','motions')
+    tables=('samples','diagnostics','events','motions','contexts')
     counts={}
     try:
         with destination.lock,destination.db:
-            for table in ('samples','diagnostics','events','motions','sessions','members'):
+            for table in ('samples','diagnostics','events','motions','contexts','sessions','members'):
                 row=destination.db.execute('SELECT COUNT(*) AS total FROM '+table).fetchone()
                 if row['total']:raise ValueError('Destination must be empty; existing data is never overwritten')
             for table in tables:
-                if table=='motions' and not snapshot.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='motions'").fetchone():
+                if table in ('motions','contexts') and not snapshot.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",(table,)).fetchone():
                     counts[table]=0;continue # Backward compatibility with pre-motion backups.
                 rows=snapshot.execute('SELECT * FROM '+table+' ORDER BY id')
                 columns=[item[0] for item in rows.description]

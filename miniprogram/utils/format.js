@@ -13,6 +13,7 @@ function duration(seconds) {
   if (n >= 3600) return `${Math.floor(n / 3600)}小时 ${Math.floor(n % 3600 / 60)}分`
   return `${Math.floor(n / 60)}分 ${n % 60}秒`
 }
+function snapshotLabel(snapshot){return snapshot&&snapshot.replayed?(snapshot.time_estimated?'读数时间（推算）':'补传接收于'):'保存于'}
 function event(value) { return Object.assign({}, value, { timeText: clock(value.occurred === null ? value.received : value.occurred),
   receiveText: clock(value.received), uptimeText: duration(value.uptime),
   bad: /中断|过高|越限|停止/.test(value.title), estimated: value.occurred !== null && value.source !== 'heartbeat',
@@ -31,4 +32,4 @@ function status(value) {
     storageText: value.diagnostic ? value.diagnostic.storage : '等待设备诊断',
     collectingText: value.latest ? value.latest.running ? '正在采集' : '采集已停止' : '尚未获知' })
 }
-module.exports = { numeric, clock, duration, event, status }
+module.exports = { numeric, clock, duration, snapshotLabel, event, status }

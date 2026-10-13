@@ -10,7 +10,7 @@ def test_history_migration_preserves_rows_and_excludes_local_authorization(tmp_p
             source.db.execute('INSERT INTO sessions(hash,expires,openid) VALUES(?,?,?)',('local-token',999,'local-owner'))
             source.db.execute('INSERT INTO members(openid,created) VALUES(?,?)',('local-owner',100))
         counts=migrate(tmp_path/'source.db',destination)
-        assert counts=={'samples':1,'diagnostics':0,'events':0,'motions':0}
+        assert counts=={'samples':1,'diagnostics':0,'events':0,'motions':0,'contexts':0}
         assert destination.db.execute('SELECT boot FROM samples').fetchone()['boot']==2
         assert not destination.db.execute('SELECT * FROM sessions').fetchall()
         assert not destination.db.execute('SELECT * FROM members').fetchall()

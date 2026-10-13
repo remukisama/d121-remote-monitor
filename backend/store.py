@@ -35,6 +35,9 @@ class Store:
             boot INTEGER,collection INTEGER,uptime REAL,peak_mg INTEGER,sample_count INTEGER NOT NULL);
           CREATE INDEX IF NOT EXISTS motions_identity ON motions(boot,collection,uptime);
           CREATE INDEX IF NOT EXISTS motions_time ON motions(stamp);
+          CREATE TABLE IF NOT EXISTS contexts(id INTEGER PRIMARY KEY,identity TEXT UNIQUE,received REAL NOT NULL,
+            boot INTEGER,collection INTEGER,kind INTEGER,uptime REAL,payload TEXT NOT NULL);
+          CREATE INDEX IF NOT EXISTS contexts_identity ON contexts(boot,collection,kind,uptime);
           CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY, identity TEXT UNIQUE, received REAL, occurred REAL,
             boot INTEGER, collection INTEGER, node INTEGER, uptime REAL, title TEXT, source TEXT,
             payload TEXT, snapshot TEXT, diagnostic TEXT, diagnosis TEXT, resolved REAL, anchor_uptime REAL, anchor_time REAL);
@@ -67,6 +70,12 @@ class Store:
     def ingest(self, kind, value, stamp=None, retained=False):
         stamp = time.time() if stamp is None else stamp
         with self.lock, self.db:
+            if kind=='ack':return
+            if kind=='context':
+                identity=f"{value['boot']}:{value['collection']}:{value['context_kind']}:{value['uptime_s']}"
+                self.db.execute('INSERT OR IGNORE INTO contexts(identity,received,boot,collection,kind,uptime,payload) VALUES(?,?,?,?,?,?,?)',
+                    (identity,stamp,value['boot'],value['collection'],value['context_kind'],value['uptime_s'],dump(value['frame'])))
+                return # Replay never refreshes live status, heartbeat, diagnostics, or node recovery.
             if kind=='motion':
                 identity=(f"{value['boot']}:{value['collection']}:{value['uptime_s']}" if value['boot'] else f"uncertain:{stamp}")
                 self.db.execute('INSERT OR IGNORE INTO motions(identity,stamp,boot,collection,uptime,peak_mg,sample_count) VALUES(?,?,?,?,?,?,?)',
@@ -103,6 +112,28 @@ class Store:
                 return
             self.add_event(dict(value, source='device', identity=f"device:{value['boot']}:{value['collection']}:{value['node']}:{value['event_id']}"), stamp)
 
+    def context_frame(self, row):
+        motion=self.db.execute('SELECT payload FROM contexts WHERE boot=? AND collection=? AND kind=3 AND uptime=? LIMIT 1',
+                              (row['boot'],row['collection'],row['uptime'])).fetchone()
+        m=json.loads(motion['payload']) if motion else {}
+        anchor=self.db.execute('SELECT stamp,uptime FROM samples WHERE boot=? AND collection=? AND retained=0 ORDER BY ABS(uptime-?) LIMIT 1',
+                              (row['boot'],row['collection'],row['uptime'])).fetchone()
+        estimated=anchor['stamp']+row['uptime']-anchor['uptime'] if anchor else None
+        known=estimated is not None and 0<=estimated<=row['received']
+        result=self.sample_frame(dict(payload=row['payload'],motion_peak_mg=m.get('peak_mg'),motion_sample_count=m.get('sample_count'),
+                                      stamp=estimated if known else row['received'],retained=1))
+        result.update(replayed=True,time_estimated=known)
+        return result
+
+    def replay_snapshot(self, boot, collection, node, uptime):
+        rows=self.db.execute('SELECT * FROM contexts WHERE boot=? AND collection=? AND kind=0 AND uptime BETWEEN ? AND ? ORDER BY uptime DESC LIMIT 60',
+                             (boot,collection,max(0,uptime-60),uptime)).fetchall()
+        for row in rows:
+            frame=self.context_frame(row);n=frame['nodes'][node-1]
+            fields=('temperature','humidity','vibration') if node==1 else ('cpu','memory_mb','load','uptime_s')
+            if frame['running'] and n['online'] and n['fresh'] and any(n.get(f) is not None for f in fields):return frame
+        return None
+
     def add_event(self, value, stamp):
         if self.db.execute('SELECT 1 FROM events WHERE identity=?',(value['identity'],)).fetchone(): return
         # Capture the last cloud-observed valid sample from the same boot and collection BEFORE the event.
@@ -134,6 +165,9 @@ class Store:
                         if candidate['running'] and usable(candidate['nodes'][position]):
                             snapshot['nodes'][position]=dict(candidate['nodes'][position])
                             snapshot['node_received_at'][position]=prior['stamp'];break
+        if node in (1,2):
+            replay=self.replay_snapshot(boot,collection,node,uptime)
+            if replay and (not snapshot or replay['uptime_s']>snapshot['uptime_s']):snapshot=replay
         occurred = stamp - (row['uptime'] - uptime) if row else None
         # Anchor to the closest frame in the same collection; buffered events may arrive much later.
         anchor = self.db.execute('SELECT stamp,uptime FROM samples WHERE boot=? AND collection=? ORDER BY ABS(uptime-?) LIMIT 1',
@@ -144,6 +178,10 @@ class Store:
         diagrow = self.db.execute('SELECT payload FROM diagnostics WHERE boot=? AND collection=? AND uptime<=? ORDER BY uptime DESC LIMIT 1',
                                  (boot, collection, uptime)).fetchone()
         diag = json.loads(diagrow['payload']) if diagrow else None
+        if snapshot and snapshot.get('replayed'):
+            prior=self.db.execute('SELECT payload FROM contexts WHERE boot=? AND collection=? AND kind=4 AND uptime<=? ORDER BY uptime DESC LIMIT 1',
+                                  (boot,collection,uptime)).fetchone()
+            if prior:diag=json.loads(prior['payload'])
         # A state transition and its following hardware event represent the same incident.
         if value['source'] == 'device':
             old = self.db.execute("SELECT id FROM events WHERE boot=? AND collection=? AND node=? AND title=? AND source='observed' AND ABS(uptime-?)<=5 ORDER BY id DESC LIMIT 1",
@@ -215,8 +253,16 @@ class Store:
             points=self.db.execute(SAMPLES_WITH_MOTION+' WHERE s.boot=? AND s.collection=? AND s.uptime BETWEEN ? AND ? ORDER BY s.uptime LIMIT 181',
                                    (row['boot'],row['collection'],max(0,row['uptime']-60),row['uptime']+30)).fetchall()
             result['points']=[self.sample_frame(p) for p in points]
-            result['available_points']=len(points)
-            result['sample_note']='云端约每秒摘要；未上传的六轴原始波形和断网期间样本不在这里'
+            contexts=self.db.execute('SELECT * FROM contexts WHERE boot=? AND collection=? AND kind=0 AND uptime BETWEEN ? AND ? ORDER BY uptime LIMIT 181',
+                                    (row['boot'],row['collection'],max(0,row['uptime']-60),row['uptime']+30)).fetchall()
+            seen={p['uptime_s'] for p in result['points']}
+            for context in contexts:
+                frame=self.context_frame(context)
+                if frame['time_estimated'] and frame['uptime_s'] not in seen:
+                    result['points'].append(frame);seen.add(frame['uptime_s'])
+            result['points'].sort(key=lambda p:p['uptime_s'])
+            result['available_points']=len(result['points'])
+            result['sample_note']='曲线包含已上传摘要和时间可推算的事前补传读数；其余未上传的原始波形不在这里'
             return result
 
     def series(self, minutes=10):
@@ -233,6 +279,7 @@ class Store:
             self.db.execute('DELETE FROM samples WHERE stamp<?',(cutoff,))
             self.db.execute('DELETE FROM diagnostics WHERE stamp<?',(cutoff,))
             self.db.execute('DELETE FROM motions WHERE stamp<?',(cutoff,))
+            self.db.execute('DELETE FROM contexts WHERE received<?',(cutoff,))
             self.db.execute('DELETE FROM events WHERE received<?',(cutoff,))
             self.db.execute('DELETE FROM sessions WHERE expires<?',(time.time(),))
 
