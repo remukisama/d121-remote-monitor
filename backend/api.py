@@ -57,7 +57,7 @@ def create_app(cfg=None, collect=True):
         from .mysql_store import MySQLStore
         store=MySQLStore(cfg.get('mysql',{}),server['device_id'],server['offline_seconds'])
     else: store=Store(database,server['device_id'],server['offline_seconds'])
-    collector=Collector(store,cfg['bemfa'],server['retention_days'])
+    collector=Collector(store,cfg['bemfa'],server['retention_days'],acknowledge=not server.get('local_dev'))
     attempts=defaultdict(deque)
 
     @asynccontextmanager
@@ -157,6 +157,7 @@ def create_app(cfg=None, collect=True):
         value=store.status(); value['device_name']=server['device_name']
         value['retention_days']=server['retention_days']
         value['collector'].update(received=collector.received,dropped=collector.dropped)
+        value['collector'].update(acks_submitted=collector.acks_submitted,ack_errors=collector.ack_errors)
         return value
 
     @app.get('/api/events')

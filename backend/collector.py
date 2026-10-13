@@ -1,15 +1,17 @@
-import queue, ssl, threading, time, uuid
+import json, queue, ssl, threading, time, uuid
 import paho.mqtt.client as mqtt
 from .protocol import decode
 
 class Collector:
-    def __init__(self, store, cfg, retention_days=30):
+    def __init__(self, store, cfg, retention_days=30, acknowledge=False):
         self.store, self.cfg, self.retention_days = store, cfg, retention_days
         self.queue = queue.Queue(maxsize=4096)
         self.stop_event = threading.Event()
         self.client = None
         self.thread = None
         self.received = self.dropped = 0
+        self.acknowledge=acknowledge
+        self.acks_submitted=self.ack_errors=0
 
     def start(self):
         if not self.cfg.get('username') or not self.cfg.get('password'):
@@ -52,6 +54,16 @@ class Collector:
                 kind,value=decode(topic,payload,self.cfg)
                 self.store.ingest(kind,value,stamp,retained)
                 self.store.archive_error=None
+                # ingest returns only after the transaction commits. A lost ACK causes
+                # a harmless device retry; failed writes never receive an ACK.
+                if self.acknowledge and self.client and not retained and kind in ('event','context'):
+                    key=([value['boot'],value['collection'],value['node'],value['event_id']] if kind=='event' else
+                         [value['boot'],value['collection'],value['context_kind'],value['uptime_s']])
+                    try:
+                        result=self.client.publish(self.cfg['event_topic']+'/set',json.dumps(dict(v=6,d=key),separators=(',',':')),qos=0,retain=False)
+                        if result.rc!=mqtt.MQTT_ERR_SUCCESS:raise OSError('Acknowledgement not queued')
+                        self.acks_submitted+=1
+                    except Exception:self.ack_errors+=1
             except queue.Empty: pass
             except (ValueError,UnicodeError,KeyError,TypeError): self.store.rejected+=1
             except Exception:

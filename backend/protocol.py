@@ -22,6 +22,18 @@ def decode(topic, raw, cfg):
     d = value.get('d')
     if not isinstance(d, list):
         raise ValueError('Missing device data')
+    if topic==cfg['event_topic'] and value.get('v')==6:
+        if len(d)!=4:raise ValueError('Malformed archive acknowledgement')
+        for x in d:integer(x)
+        integer(d[2],0,4)
+        return 'ack',dict(key=d)
+    if topic==cfg['event_topic'] and value.get('v') in (5,7,8):
+        version=value['v'];original={5:2,7:4,8:3}[version]
+        kind,frame=decode(cfg['state_topic'] if version==5 else topic,
+                         json.dumps(dict(v=original,d=d),separators=(',',':')).encode(),cfg)
+        if not frame['boot']:raise ValueError('Replay requires a durable boot identity')
+        return 'context',dict(boot=frame['boot'],collection=frame['collection'],uptime_s=frame['uptime_s'],
+                              context_kind={5:0,7:3,8:4}[version],frame=frame)
     if topic == cfg['state_topic'] and value.get('v') == 2:
         if len(d) != 6 or not isinstance(d[4], list) or not isinstance(d[5], list) or len(d[4]) != 5 or len(d[5]) != 7:
             raise ValueError('Malformed state')

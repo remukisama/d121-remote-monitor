@@ -17,7 +17,7 @@ Page({
     try{
       const value=await api.request('/api/events/'+this.id),node=value.node===2?2:1
       this.setData({event:Object.assign(fmt.event(value),{
-        snapshotTime:savedTime(value,node),last:reading(value,node)
+        snapshotTime:savedTime(value,node),snapshotTimeLabel:fmt.snapshotLabel(value.snapshot),last:reading(value,node)
       }),chartNode:node,metric:node===2?'cpu':/振动/.test(value.title)?'vibration':'temperature',unit:node===2?'%':/振动/.test(value.title)?'g':'℃',error:''})
     }catch(error){this.setData({error:error.message})}
   },
