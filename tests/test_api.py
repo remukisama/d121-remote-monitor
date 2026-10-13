@@ -1,7 +1,55 @@
 import copy,json
+import logging
+import httpx
+import pytest
 from pathlib import Path
 from fastapi.testclient import TestClient
 from backend.api import create_app,load_config
+
+@pytest.mark.parametrize('failure,expected',[
+    (httpx.ConnectError('sensitive-secret-in-connection-error'),'WX_UPSTREAM_CONNECT'),
+    (httpx.ReadTimeout('sensitive-secret-in-timeout'),'WX_UPSTREAM_TIMEOUT'),
+    (json.JSONDecodeError('sensitive-secret-in-response','not-json',0),'WX_UPSTREAM_JSON')
+])
+def test_wechat_failure_diagnostics_do_not_expose_secrets(tmp_path,monkeypatch,caplog,failure,expected):
+    cfg=json.loads((Path(__file__).parents[1]/'config.example.json').read_text(encoding='utf-8'))
+    cfg['server'].update(database=str(tmp_path/'auth-error.db'))
+    cfg['wechat'].update(appid='test-appid',appsecret='sensitive-secret-config')
+    class UpstreamClient:
+        def __init__(self,**kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self,*args): pass
+        async def get(self,*args,**kwargs): raise failure
+    monkeypatch.setattr('backend.api.httpx.AsyncClient',UpstreamClient)
+    with caplog.at_level(logging.WARNING),TestClient(create_app(cfg,collect=False)) as client:
+        response=client.post('/api/auth/wechat',json={'code':'sensitive-secret-login-code'})
+        assert response.status_code==503
+        assert response.json()['diagnostic_code']==expected
+        assert expected in caplog.text
+        assert 'sensitive-secret' not in response.text+caplog.text
+
+def test_verified_wechat_owner_pairs_once_and_can_log_in_again(tmp_path,monkeypatch):
+    cfg=json.loads((Path(__file__).parents[1]/'config.example.json').read_text(encoding='utf-8'))
+    cfg['server'].update(database=str(tmp_path/'wechat-owner.db'),pairing_code='private-owner-pairing')
+    cfg['wechat'].update(appid='test-appid',appsecret='private-wechat-secret')
+    class UpstreamClient:
+        def __init__(self,**kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self,*args): pass
+        async def get(self,*args,**kwargs):
+            return httpx.Response(200,json={'openid':'verified-owner','session_key':'server-only-session-key'},
+                                  request=httpx.Request('GET','https://api.weixin.qq.com/sns/jscode2session'))
+    monkeypatch.setattr('backend.api.httpx.AsyncClient',UpstreamClient)
+    with TestClient(create_app(cfg,collect=False)) as client:
+        assert client.post('/api/auth/wechat',json={'code':'code-1','pairing_code':'wrong'}).status_code==403
+        paired=client.post('/api/auth/wechat',json={'code':'code-2','pairing_code':'private-owner-pairing'})
+        assert paired.status_code==200
+        assert 'server-only-session-key' not in paired.text
+        headers={'Authorization':'Bearer '+paired.json()['token']}
+        assert client.get('/api/status',headers=headers).status_code==200
+        assert client.post('/api/auth/wechat',json={'code':'code-3'}).status_code==200
+        assert client.post('/api/auth/logout',headers=headers).status_code==200
+        assert client.get('/api/status',headers=headers).status_code==401
 
 def test_auth_expiry_permissions_and_query_bounds(tmp_path):
     cfg=json.loads((Path(__file__).parents[1]/'config.example.json').read_text(encoding='utf-8'))

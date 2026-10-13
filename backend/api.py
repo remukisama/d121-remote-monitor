@@ -1,4 +1,4 @@
-import hashlib, json, os, secrets, time
+import hashlib, json, logging, os, secrets, ssl, time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -10,6 +10,20 @@ from .store import Store
 from .collector import Collector
 
 ROOT=Path(__file__).resolve().parents[1]
+logger=logging.getLogger('d121.auth')
+
+def login_failure(error):
+    """Expose bounded categories, never exception text or credential-bearing URLs."""
+    chain=[];current=error
+    while current is not None and len(chain)<8 and all(current is not previous for previous in chain):
+        chain.append(current);current=current.__cause__ or current.__context__
+    if any(isinstance(item,ssl.SSLCertVerificationError) for item in chain): code='WX_UPSTREAM_TLS'
+    elif isinstance(error,httpx.TimeoutException): code='WX_UPSTREAM_TIMEOUT'
+    elif isinstance(error,httpx.ConnectError): code='WX_UPSTREAM_CONNECT'
+    elif isinstance(error,httpx.HTTPStatusError): code='WX_UPSTREAM_HTTP'
+    elif isinstance(error,json.JSONDecodeError): code='WX_UPSTREAM_JSON'
+    else: code='WX_UPSTREAM_RUNTIME'
+    return code,','.join(type(item).__name__ for item in chain)
 
 class Login(BaseModel):
     code: str = Field(min_length=1,max_length=256)
@@ -105,14 +119,22 @@ def create_app(cfg=None, collect=True):
         rate_limit(request)
         wx=cfg['wechat']
         if not wx.get('appsecret'): raise HTTPException(503,'微信登录配置尚未完成')
+        stage='client'
         try:
             async with httpx.AsyncClient(timeout=10) as client:
-                result=(await client.get('https://api.weixin.qq.com/sns/jscode2session',params={
-                    'appid':wx['appid'],'secret':wx['appsecret'],'js_code':body.code,'grant_type':'authorization_code'})).json()
+                stage='request'
+                response=await client.get('https://api.weixin.qq.com/sns/jscode2session',params={
+                    'appid':wx['appid'],'secret':wx['appsecret'],'js_code':body.code,'grant_type':'authorization_code'})
+                stage='http_status';response.raise_for_status()
+                stage='json';result=response.json()
+            stage='identity'
             openid=result.get('openid')
             if not isinstance(openid,str) or not openid: raise HTTPException(401,'微信登录校验失败，请重试')
         except HTTPException: raise
-        except Exception: raise HTTPException(503,'微信登录服务暂不可用') from None
+        except Exception as error:
+            code,kinds=login_failure(error)
+            logger.warning('wechat_login_unavailable stage=%s code=%s exceptions=%s',stage,code,kinds)
+            return JSONResponse(status_code=503,content={'detail':'微信登录服务暂不可用','diagnostic_code':code})
         with store.lock:
             member=store.db.execute('SELECT 1 FROM members WHERE openid=?',(openid,)).fetchone()
         allowed=openid in wx.get('allowed_openids',[]) or member
