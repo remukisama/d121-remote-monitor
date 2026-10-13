@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from .store import Store
 from .collector import Collector
+from .wechat_tls import wechat_ssl_context
 
 ROOT=Path(__file__).resolve().parents[1]
 logger=logging.getLogger('d121.auth')
@@ -121,7 +122,7 @@ def create_app(cfg=None, collect=True):
         if not wx.get('appsecret'): raise HTTPException(503,'微信登录配置尚未完成')
         stage='client'
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
+            async with httpx.AsyncClient(timeout=10,verify=wechat_ssl_context()) as client:
                 stage='request'
                 response=await client.get('https://api.weixin.qq.com/sns/jscode2session',params={
                     'appid':wx['appid'],'secret':wx['appsecret'],'js_code':body.code,'grant_type':'authorization_code'})
