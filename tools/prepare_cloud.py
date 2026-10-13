@@ -17,4 +17,11 @@ if not cfg['server'].get('pairing_code'):
 cloud.setdefault('mysql',{}).setdefault('database','d121_monitor')
 dest=root/'output';dest.mkdir(exist_ok=True)
 (dest/'cloud-config.private.json').write_text(json.dumps(cloud,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+mysql=cloud.get('mysql',{})
+address=(str(mysql.get('host',''))+':'+str(mysql.get('port',3306))) if mysql.get('host') else ''
+env={'D121_CONFIG_JSON':json.dumps(cloud,ensure_ascii=False,separators=(',',':')),
+     'MYSQL_ADDRESS':address,'MYSQL_USERNAME':mysql.get('username','root'),
+     'MYSQL_PASSWORD':mysql.get('password',''),'MYSQL_DATABASE':mysql.get('database','d121_monitor')}
+(dest/'cloud-env.private.json').write_text(json.dumps(env,ensure_ascii=False,indent=2),encoding='utf-8')
 print('Private runtime config prepared for D121_CONFIG_JSON. No credentials printed.')
+print('Cloud console JSON environment form prepared in output/cloud-env.private.json.')
