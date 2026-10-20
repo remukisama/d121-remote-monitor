@@ -3,3 +3,5 @@
 !requirements.lock.txt
 !backend/
 !backend/*.py
+!tools/
+!tools/database_backup.py
