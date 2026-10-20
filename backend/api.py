@@ -106,6 +106,17 @@ def create_app(cfg=None, collect=True):
     @app.get('/health')
     def health(): return dict(service='d121-monitor',ok=True)
 
+    @app.get('/ready')
+    def ready():
+        database=store.database_ready()
+        worker=bool(collector.thread and collector.thread.is_alive())
+        subscribed=bool(store.linked)
+        archive=store.archive_error is None
+        ok=database and worker and subscribed and archive
+        return JSONResponse(status_code=200 if ok else 503,content=dict(
+            service='d121-monitor',ok=ok,database=database,worker=worker,
+            subscribed=subscribed,archive=archive))
+
     @app.post('/api/auth/local')
     def local_login(body:Login,request:Request):
         rate_limit(request)
@@ -158,6 +169,7 @@ def create_app(cfg=None, collect=True):
         value['retention_days']=server['retention_days']
         value['collector'].update(received=collector.received,dropped=collector.dropped)
         value['collector'].update(acks_submitted=collector.acks_submitted,ack_errors=collector.ack_errors)
+        value['collector'].update(write_errors=collector.write_errors,observer_errors=collector.observer_errors)
         return value
 
     @app.get('/api/events')

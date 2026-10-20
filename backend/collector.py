@@ -10,6 +10,7 @@ class Collector:
         self.client = None
         self.thread = None
         self.received = self.dropped = 0
+        self.write_errors = self.observer_errors = 0
         self.acknowledge=acknowledge
         self.acks_submitted=self.ack_errors=0
 
@@ -52,7 +53,14 @@ class Collector:
             try:
                 topic,payload,stamp,retained=self.queue.get(timeout=0.5)
                 kind,value=decode(topic,payload,self.cfg)
-                self.store.ingest(kind,value,stamp,retained)
+                try:
+                    self.store.ingest(kind,value,stamp,retained)
+                except Exception:
+                    # Count failed persistence separately from malformed input and
+                    # queue overflow. Device events remain unacknowledged for replay.
+                    self.write_errors+=1
+                    self.store.archive_error='历史记录服务发生写入异常，请检查服务器存储'
+                    continue
                 self.store.archive_error=None
                 # ingest returns only after the transaction commits. A lost ACK causes
                 # a harmless device retry; failed writes never receive an ACK.
@@ -67,10 +75,12 @@ class Collector:
             except queue.Empty: pass
             except (ValueError,UnicodeError,KeyError,TypeError): self.store.rejected+=1
             except Exception:
+                self.observer_errors+=1
                 self.store.archive_error='历史记录服务发生写入异常，请检查服务器存储'
             try: self.store.check_offline()
             except Exception:
                 # A lost database connection must not kill the archive worker.
+                self.observer_errors+=1
                 self.store.archive_error='历史记录服务发生写入异常，请检查服务器存储'
             if time.monotonic()>=prune_at:
                 try: self.store.prune(self.retention_days)

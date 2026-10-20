@@ -53,6 +53,15 @@ class Store:
             self.error = error
             if connected: self.link_since = time.monotonic()
 
+    def database_ready(self):
+        if not self.lock.acquire(timeout=0.1): return False
+        try:
+            return self.db.execute('SELECT 1').fetchone() is not None
+        except Exception:
+            return False
+        finally:
+            self.lock.release()
+
     @staticmethod
     def sample_frame(row):
         value=json.loads(row['payload']);star=value['nodes'][0]

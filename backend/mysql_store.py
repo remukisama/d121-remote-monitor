@@ -52,11 +52,36 @@ class Connection:
         try:
             if kind: self.connection.rollback()
             else: self.connection.commit()
+        except Exception:
+            # Do not reconnect into a new transaction and then accidentally ACK
+            # a failed commit. Clean up before the next operation's reconnect.
+            try: self.connection.rollback()
+            except Exception: self.connection.close()
+            raise
         finally: self.in_transaction=False
     def commit(self): self.connection.commit()
     def close(self): self.connection.close()
 
+    def probe(self):
+        options=dict(self.options,connect_timeout=2,read_timeout=2,write_timeout=2)
+        connection=None
+        try:
+            connection=pymysql.connect(**options)
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT 1')
+                return cursor.fetchone() is not None
+        except Exception:
+            return False
+        finally:
+            if connection is not None:
+                try: connection.close()
+                except Exception: pass
+
 class MySQLStore(Store):
+    def database_ready(self):
+        # A blocked collector connection must not block the readiness probe.
+        return self.db.probe()
+
     def __init__(self,cfg,device_id='d121-01',offline_seconds=15):
         self.device_id,self.offline_seconds=device_id,offline_seconds
         self.lock=threading.RLock();self.linked=False;self.link_since=None;self.last_receive=None;self.receive_clock=None
