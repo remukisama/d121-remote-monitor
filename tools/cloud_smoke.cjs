@@ -8,7 +8,7 @@ const guard = setTimeout(() => { console.error('Cloud QA timeout'); process.exit
 guard.unref()
 async function main() {
   const cfg = JSON.parse(fs.readFileSync(path.join(root, 'config.private.json'), 'utf8').replace(/^\uFEFF/, ''))
-  const mini = await automator.connect({wsEndpoint:'ws://127.0.0.1:9420'})
+  const mini = await automator.connect({wsEndpoint:process.env.D121_AUTOMATOR_WS || 'ws://127.0.0.1:9420'})
   const report = {checked_at:new Date().toISOString(),checks:[]}
   async function request(url, method='GET', data) {
     await mini.evaluate(v => {
