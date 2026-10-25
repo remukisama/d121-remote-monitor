@@ -76,7 +76,7 @@ async function main() {
     report.status=status.data
     const nodes=status.data.latest?.nodes||[]
     pass('cloud device status',{state:status.data.state,collector:status.data.collector,node_count:nodes.length})
-    if(nodes.length!==2 || nodes.some(node=>!node.online || !node.fresh))throw new Error('Both cloud nodes are not reporting fresh live data')
+    if(status.data.state!=='online' || !status.data.collector.connected || nodes.length!==2 || nodes.some(node=>!node.online || !node.fresh))throw new Error('Cloud device is offline or both nodes are not reporting fresh live data')
     // State and motion arrive as separate packets; allow the matching motion to land.
     let star=nodes.find(node=>node.node===1)
     for(let i=0;i<12 && (!Number.isFinite(star?.vibration)||!star?.vibration_samples);i++){
