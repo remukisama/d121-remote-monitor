@@ -1,0 +1,9 @@
+{
+  "backup_complete": true,
+  "bytes": 4194304,
+  "chunk_bytes": 65536,
+  "independent_passes": 2,
+  "device_md5_matched": true,
+  "sha256": "5f139363d02183623a1488755c546d285bf59a683469269a78ed13b515cfb7f8",
+  "flash_written": false
+}

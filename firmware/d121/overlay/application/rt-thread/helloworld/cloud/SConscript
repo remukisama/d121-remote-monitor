@@ -1,0 +1,5 @@
+from building import *
+cwd = GetCurrentDir()
+group = DefineGroup('cloud', Glob('*.c'), depend=[''],
+                    CPPPATH=[cwd, cwd + '/../blackbox', cwd + '/../rs485'])
+Return('group')

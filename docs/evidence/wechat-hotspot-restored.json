@@ -1,0 +1,145 @@
+{
+  "checked_at": "2026-10-25T08:48:04.358Z",
+  "checks": [
+    {
+      "name": "cloud health",
+      "status": 200,
+      "service": "d121-monitor"
+    },
+    {
+      "name": "anonymous access rejected",
+      "status": 401
+    },
+    {
+      "name": "local development login disabled",
+      "status": 403
+    },
+    {
+      "name": "WeChat upstream reachable",
+      "status": 401
+    },
+    {
+      "name": "real WeChat login and pairing",
+      "authenticated": true
+    },
+    {
+      "name": "cloud device status",
+      "state": "online",
+      "collector": {
+        "connected": true,
+        "error": null,
+        "rejected": 0,
+        "received": 6631,
+        "dropped": 0,
+        "acks_submitted": 28,
+        "ack_errors": 0,
+        "write_errors": 0,
+        "observer_errors": 0
+      },
+      "node_count": 2
+    },
+    {
+      "name": "cloud live vibration",
+      "peak_g": 0.016,
+      "valid_samples": 10
+    },
+    {
+      "name": "cloud archived samples",
+      "count": 36
+    },
+    {
+      "name": "cloud archived vibration",
+      "count": 36
+    },
+    {
+      "name": "cloud archived events",
+      "count": 20
+    },
+    {
+      "name": "pre-deployment history preserved",
+      "event_id": 42
+    },
+    {
+      "name": "cloud event detail",
+      "id": 436
+    },
+    {
+      "name": "continuous cloud reception",
+      "received_before": 6631,
+      "received_after": 6649
+    },
+    {
+      "name": "cloud logout revokes old session",
+      "revoked": true
+    },
+    {
+      "name": "paired owner can log in again without pairing code",
+      "authenticated": true
+    }
+  ],
+  "status": {
+    "device_id": "d121-01",
+    "state": "online",
+    "age_s": 0.9,
+    "collector": {
+      "connected": true,
+      "error": null,
+      "rejected": 0,
+      "received": 6631,
+      "dropped": 0,
+      "acks_submitted": 28,
+      "ack_errors": 0,
+      "write_errors": 0,
+      "observer_errors": 0
+    },
+    "latest": {
+      "boot": 24,
+      "collection": 1,
+      "uptime_s": 4861,
+      "running": true,
+      "nodes": [
+        {
+          "node": 1,
+          "name": "星火传感从站",
+          "online": true,
+          "fresh": true,
+          "flags": 33,
+          "temperature": 25.08,
+          "humidity": 48.24,
+          "vibration": 0.016,
+          "vibration_samples": 10
+        },
+        {
+          "node": 2,
+          "name": "龙芯系统从站",
+          "online": true,
+          "fresh": true,
+          "valid": 15,
+          "cpu": 1,
+          "memory_mb": 64.140625,
+          "load": 0,
+          "uptime_s": 5214
+        }
+      ],
+      "received_at": 1792918092.1144125,
+      "retained": false
+    },
+    "diagnostic": {
+      "boot": 24,
+      "collection": 1,
+      "uptime_s": 4858,
+      "storage": "TF 卡",
+      "write_errors": 0,
+      "dropped_frames": 0,
+      "bus_ok": 38284,
+      "bus_timeouts": 9245,
+      "bus_crc_errors": 0,
+      "chip_temperature": 37.7
+    },
+    "offline_seconds": 15,
+    "server_time": 1792918093.0437114,
+    "device_name": "我的监控终端",
+    "retention_days": 30
+  },
+  "success": true
+}

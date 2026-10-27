@@ -1,0 +1,20 @@
+{
+  "checked_on": "2026-10-25",
+  "device_tls_actual_passed": true,
+  "ca_hostname_expiry_negative_controls_passed": true,
+  "initial_backlog_drained": 10,
+  "first_wechat_checks_passed": 15,
+  "short_fault_acceptance_passed": true,
+  "fault_events_drained": 2,
+  "last_network_state": "TLS online after user restored hotspot",
+  "wifi_stability_complete": false,
+  "hotspot_outage_recovery_verified": true,
+  "hotspot_outage_explained_by_user": true,
+  "latest_cloud_recheck_passed": true,
+  "local_dual_node_recording_healthy": true,
+  "mobile_network_acceptance_complete": true,
+  "mobile_network_evidence_source": "User confirmation in this conversation",
+  "long_duration_observation": "paused by user",
+  "full_original_flash_backup_verified": true,
+  "full_restore_drill_complete": false
+}

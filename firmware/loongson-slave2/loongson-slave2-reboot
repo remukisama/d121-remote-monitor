@@ -1,0 +1,6 @@
+#!/bin/sh
+# Retired: ES8323 unbinding exposed a second panic in AIC8800 SDIO removal.
+# Preserve the command name so an older instruction cannot reboot the board.
+echo 'Software reboot helper is disabled: installed LoongOS has ES8323/AIC8800 shutdown crashes.' >&2
+echo 'Use a planned physical reset; stop loongson-slave2 and sync files before maintenance.' >&2
+exit 2

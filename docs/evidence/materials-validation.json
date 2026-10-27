@@ -1,0 +1,29 @@
+{
+  "checked_on": "2026-10-25",
+  "scope": "Generated delivery and filming materials; no new hardware fault injection or firmware write",
+  "pdf_manual_pages": 8,
+  "pdf_filming_guide_pages": 7,
+  "pdf_all_final_pages_rendered_and_visually_reviewed": true,
+  "pdf_text_and_page_bounds_checked": true,
+  "firmware_hashes_match_existing_acceptance": true,
+  "archive_crc_and_all_manifest_hashes_checked": true,
+  "private_configured_value_scan_including_nested_firmware_zip_passed": true,
+  "browser": {
+    "tool": "Playwright CLI",
+    "slides_checked": 8,
+    "slide_navigation_and_notes_passed": true,
+    "prompter_scene_selection_scroll_and_pause_passed": true,
+    "desktop_viewport": "1366x900",
+    "mobile_viewport": "390x844",
+    "horizontal_overflow_observed": false,
+    "architecture_slide_fits_desktop_viewport": true,
+    "external_network_dependencies": false
+  },
+  "demo_script": {
+    "powershell_syntax_check_passed": true,
+    "network_fault_preview_passed": true,
+    "new_script_hardware_fault_run_performed": false
+  },
+  "recorded_real_hardware_video_included": false,
+  "long_duration_observation_restarted": false
+}

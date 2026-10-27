@@ -1,0 +1,294 @@
+{
+  "scope": "Isolated ESP8266 actual TLS handshake; MQTT and master still require acceptance",
+  "success": true,
+  "clock_year": 2026,
+  "expired_certificate_rejected": true,
+  "wrong_hostname_rejected": true,
+  "wrong_ca_rejected": true,
+  "restored_handshake": true,
+  "checks": [
+    {
+      "command": "AT",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "ATE0",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+GMR",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "version": [
+        "AT version:2.2.2.0(6cdf453 - ESP8266 - Nov 18 2024 08:03:40)",
+        "SDK version:ff16a35-dirty",
+        "Bin version:2.2.2-d121-tls-date(WROOM-02)"
+      ]
+    },
+    {
+      "command": "AT+CWMODE",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CWJAP?",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "association_matches": false
+    },
+    {
+      "command": "AT+CIPSTATUS",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "ip_status": 1
+    },
+    {
+      "command": "AT+CWJAP",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 4.41
+    },
+    {
+      "command": "AT+CIPSNTPTIME?",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "clock_year": 1970
+    },
+    {
+      "command": "AT+CIPSNTPTIME?",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "clock_year": 1970
+    },
+    {
+      "command": "AT+CIPSNTPTIME?",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "clock_year": 2026
+    },
+    {
+      "command": "AT+CIPMUX",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCONF",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCONF?",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "authentication": [
+        "+CIPSSLCCONF:0,2,0,0",
+        "+CIPSSLCCONF:1,2,0,0",
+        "+CIPSSLCCONF:2,2,0,0",
+        "+CIPSSLCCONF:3,2,0,0",
+        "+CIPSSLCCONF:4,2,0,0"
+      ]
+    },
+    {
+      "command": "AT+CIPSSLCSNI",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCN",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "correct_ca_and_hostname",
+      "ok": true,
+      "error": false,
+      "connected": true,
+      "seconds": 5.31
+    },
+    {
+      "command": "AT+CIPCLOSE",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCN",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "wrong_hostname",
+      "ok": false,
+      "error": true,
+      "connected": false,
+      "seconds": 1.42
+    },
+    {
+      "command": "AT+CIPCLOSE",
+      "ok": false,
+      "error": true,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCN",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCONF",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCONF?",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "authentication": [
+        "+CIPSSLCCONF:0,2,0,1",
+        "+CIPSSLCCONF:1,2,0,1",
+        "+CIPSSLCCONF:2,2,0,1",
+        "+CIPSSLCCONF:3,2,0,1",
+        "+CIPSSLCCONF:4,2,0,1"
+      ]
+    },
+    {
+      "command": "wrong_ca",
+      "ok": false,
+      "error": true,
+      "connected": false,
+      "seconds": 1.31
+    },
+    {
+      "command": "AT+CIPCLOSE",
+      "ok": false,
+      "error": true,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCONF",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.12
+    },
+    {
+      "command": "AT+CIPSSLCCN",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.09
+    },
+    {
+      "command": "AT+CIPSSLCSNI",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "expired_certificate",
+      "ok": false,
+      "error": true,
+      "connected": false,
+      "seconds": 20.11
+    },
+    {
+      "command": "AT+CIPCLOSE",
+      "ok": false,
+      "error": true,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCN",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCSNI",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCONF",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    },
+    {
+      "command": "AT+CIPSSLCCONF?",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11,
+      "authentication": [
+        "+CIPSSLCCONF:0,2,0,0",
+        "+CIPSSLCCONF:1,2,0,0",
+        "+CIPSSLCCONF:2,2,0,0",
+        "+CIPSSLCCONF:3,2,0,0",
+        "+CIPSSLCCONF:4,2,0,0"
+      ]
+    },
+    {
+      "command": "restored_correct_ca_and_hostname",
+      "ok": true,
+      "error": false,
+      "connected": true,
+      "seconds": 4.77
+    },
+    {
+      "command": "AT+CIPCLOSE",
+      "ok": true,
+      "error": false,
+      "connected": false,
+      "seconds": 0.11
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+diff --git a/tools/ldgen/generation.py b/tools/ldgen/generation.py
+index 686defc..db5b4be 100644
+--- a/tools/ldgen/generation.py
++++ b/tools/ldgen/generation.py
+@@ -23 +23 @@ from fragments import Sections, Scheme, Mapping, Fragment
+-from pyparsing import Suppress, White, ParseException, Literal, Group, ZeroOrMore
++from pyparsing import Suppress, White, ParseException, Literal, Group, ZeroOrMore, Regex
+@@ -582 +582 @@ class SectionsInfo(dict):
+-                        Word(printables + " ").setResultsName("archive_path").setParseAction(lambda t: t[0][:-1]) +
++                        Regex(r"[^\r\n]+:").setResultsName("archive_path").setParseAction(lambda t: t[0][:-1]) +
+@@ -591 +591 @@ class SectionsInfo(dict):
+-            raise ParseException("Parsing sections info for library " + sections_info_dump.name + " failed. " + p.message)
++            raise ParseException("Parsing sections info for library " + sections_info_dump.name + " failed. " + p.msg)

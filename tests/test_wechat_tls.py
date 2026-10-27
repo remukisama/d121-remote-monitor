@@ -29,7 +29,10 @@ def test_platform_root_is_appended_without_disabling_certificate_checks(tmp_path
                 connection,_=listener.accept();connection.settimeout(5)
                 try:
                     with server_context.wrap_socket(connection,server_side=True) as stream:stream.sendall(b'verified')
-                except ssl.SSLError:connection.close() # Expected client rejection in two cases.
+                except (ssl.SSLError, ConnectionResetError):
+                    # Windows may report an intentionally rejected handshake as
+                    # a TCP reset. The successful client still must read data.
+                    connection.close()
         except Exception as error:errors.append(error)
         finally:listener.close()
     worker=threading.Thread(target=serve,daemon=True);worker.start()

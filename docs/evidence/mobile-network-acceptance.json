@@ -1,0 +1,16 @@
+{
+  "reported_on": "2026-10-25",
+  "evidence_source": "User confirmation in this conversation",
+  "transport": "Phone cellular network (4G/5G); exact generation not recorded",
+  "user_response": "四项均正常",
+  "checks": {
+    "login": true,
+    "both_nodes_live_data": true,
+    "history_list": true,
+    "event_detail": true
+  },
+  "success": true,
+  "independently_instrumented_by_agent": false,
+  "public_miniprogram_release_review_verified": false,
+  "long_duration_acceptance": false
+}

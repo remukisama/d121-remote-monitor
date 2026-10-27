@@ -1,0 +1,38 @@
+{
+  "checked_on": "2026-10-25",
+  "user_reported_hotspot_previously_closed_or_phone_away": true,
+  "user_reported_hotspot_restored": true,
+  "automatic_recovery_verified": true,
+  "manual_reset_or_reflash_required": false,
+  "before": {
+    "online": 1,
+    "attempts": 38,
+    "reconnects": 37,
+    "submitted": 782,
+    "queued": 0,
+    "app_ack": 24,
+    "persist_errors": 0,
+    "errors": 29,
+    "timeouts": 10,
+    "boot": 24,
+    "tls": 1,
+    "auth_verified": 1
+  },
+  "after": {
+    "online": 1,
+    "attempts": 38,
+    "reconnects": 37,
+    "submitted": 936,
+    "queued": 0,
+    "app_ack": 24,
+    "persist_errors": 0,
+    "errors": 29,
+    "timeouts": 10,
+    "boot": 24,
+    "tls": 1,
+    "auth_verified": 1
+  },
+  "cloud_checks_passed": 15,
+  "cloud_online": true,
+  "long_duration_acceptance": false
+}

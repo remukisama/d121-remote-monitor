@@ -1,6 +1,7 @@
+param([string]$MasterPort='COM6',[string]$StarPort='COM5')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
-Import-Module 'D:\xuantie\work\scripts\serial\board.psm1' -Force
+Import-Module (Join-Path $PSScriptRoot 'serial/board.psm1') -Force
 $cfg=Get-Content (Join-Path $root 'config.private.json') -Raw | ConvertFrom-Json
 $session=Invoke-RestMethod -Uri 'http://127.0.0.1:8765/api/auth/local' -Method Post -ContentType 'application/json' -Body (@{code=$cfg.server.development_token}|ConvertTo-Json)
 $headers=@{Authorization='Bearer '+$session.token}
@@ -16,7 +17,7 @@ try {
  do{$s=GetApi '/api/status';if($s.state -eq 'online' -and $s.latest.nodes[0].online -and $s.latest.nodes[1].online -and $s.diagnostic){break};Start-Sleep -Seconds 1}while($ready.ElapsedMilliseconds -lt 15000)
  if($s.state -ne 'online' -or !$s.latest.nodes[0].online -or !$s.latest.nodes[1].online){throw 'Baseline not healthy'}
  $initialStorage=$s.diagnostic.storage
- [void](Cmd COM5 'rs485_slave stop');$slaveStopped=$true;Start-Sleep -Seconds 4
+ $slaveStopped=$true;[void](Cmd $StarPort 'rs485_slave stop');Start-Sleep -Seconds 4
  $s=GetApi '/api/status';if($s.state -ne 'online' -or $s.latest.nodes[0].online -or !$s.latest.nodes[1].online){throw 'Single-node failure was not isolated'}
  $items=(GetApi '/api/events?node=1&limit=10').items
  $incident=$items|Where-Object {$_.title -eq '通信中断'}|Select-Object -First 1
@@ -25,9 +26,9 @@ try {
  if($detail.available_points -lt 2 -or $detail.diagnosis.confidence -ne '原因尚未确认'){throw 'Pre-outage curve or evidence boundary failed'}
  $detail|ConvertTo-Json -Depth 15|Out-File (Join-Path $root 'data/star-outage.json') -Encoding utf8
  Write-Output 'PASS: actual Star outage, Loongson unaffected, before-data retained, no fabricated cause'
- [void](Cmd COM5 'rs485_slave start 1');$slaveStopped=$false;Start-Sleep -Seconds 4
+ [void](Cmd $StarPort 'rs485_slave start 1');$slaveStopped=$false;Start-Sleep -Seconds 4
  if(!(GetApi '/api/status').latest.nodes[0].online){throw 'Star did not recover'}
- [void](Cmd COM6 'cloud pause 25');Start-Sleep -Seconds 18
+ [void](Cmd $MasterPort 'cloud pause 25');Start-Sleep -Seconds 18
  $s=GetApi '/api/status'
  if($s.state -ne 'offline' -or !$s.collector.connected){throw 'Master uplink outage not detected independently'}
  $items=(GetApi '/api/events?node=0&limit=5').items
@@ -42,9 +43,9 @@ try {
  if(!$detail.resolved){throw 'Outage recovery was not recorded'}
  if(!($detail.diagnosis.observations -match '未观察到主站重新启动')){throw 'Same-boot recovery evidence was not recorded'}
  if($s.diagnostic.storage -ne $initialStorage -or $s.diagnostic.write_errors -ne 0){throw 'Storage changed or failed during the test'}
- [void](Cmd COM6 'bbstat');[void](Cmd COM6 'cloud stat');[void](Cmd COM6 'apphealth')
+ [void](Cmd $MasterPort 'bbstat');[void](Cmd $MasterPort 'cloud stat');[void](Cmd $MasterPort 'apphealth')
  Write-Output "PASS: reconnect, same-boot diagnosis and persisted incident resolution; storage=$initialStorage remained active"
  Add-Content -LiteralPath $log -Value 'PASS: hardware cloud history and offline recovery checks'
 } finally {
- if($slaveStopped){try{[void](Cmd COM5 'rs485_slave start 1')}catch{Write-Warning 'Star restore requires attention'}}
+ if($slaveStopped){try{[void](Cmd $StarPort 'rs485_slave start 1')}catch{Write-Warning 'Star restore requires attention'}}
 }

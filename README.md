@@ -1,78 +1,90 @@
-# D121 远程监控微信小程序
+# D121 双节点设备监控终端
 
-微信原生小程序显示玄铁主站、星火传感从站、龙芯系统从站。后台持续订阅巴法 MQTT，把设备摘要、事件、掉线前读数保存到数据库；关闭小程序后仍继续记录。
+基于玄铁 D121、星火 STM32F407 与龙芯 LS2K0300 的设备监控项目：主站通过 Modbus RTU 汇聚两个从站，在触摸屏显示和回放历史，并通过 ESP8266 将摘要和关键事件上传至云后台，供微信小程序查看。
 
-公开源码：[remukisama/d121-remote-monitor](https://github.com/remukisama/d121-remote-monitor)。云托管可绑定该仓库，分支为 `codex/wechat-cloud-20261012`，构建根目录、`Dockerfile`，端口 `8080`。运行密钥通过云端环境变量配置。
+![系统架构示意](docs/delivery/assets/architecture.png)
 
-项目目录：`D:\codex相关项目\D121远程监控小程序`。开发者工具导入 `miniprogram` 子目录，AppID 为 `YOUR_WECHAT_APPID`。微信云托管已实测真实微信登录、配对、双站采集、MySQL 历史读回和掉线前数据。2026-10-25 用户确认手机移动网络下登录、两站实时数据、历史列表和事件详情四项均正常；此为用户真机反馈。
+本仓库包含项目主站、两个从站、网络模块定制代码、云后台、小程序与交付资料。星火从站包含其所需的 RT-Thread / STM32 BSP；D121 和 ESP8266 的厂商 SDK 通过固定的上游提交与仓库内覆盖源码重建。云后台与小程序原有目录保持不变，云容器仍从根目录 Dockerfile 构建。
 
-2026-10-25：D121 → ESP8266 → 巴法云的设备链路已切到 TLS 9503，CA、域名和证书有效期有实机正反对照；最终 AT 接线为 D121 PA2/TX → NodeMCU D7/GPIO13、PA3/RX ← D8/GPIO15，并共地。真实微信云端 15 项及短时停传/单站恢复通过。后续找不到 AP 由用户确认热点曾关闭或手机离开过；恢复后主站自动重连，云端 15 项复验通过，当前无此网络阻塞，长期稳定性未验收。后台部署保持 `d121-monitor-015`，本轮没有修改后台到 MQTT 的传输配置。跨工程证据和交付包在 `D:\xuantie\work\network-hardening-20261022\`；长期观测按用户要求暂停。
+## 系统功能
 
-## 已实现的使用流程
+- **本地采集与回放**：D121 轮询星火的温湿度和六轴数据，以及龙芯的 CPU、内存、负载和运行时间；本地界面展示趋势和事件，TF 卡保存记录并支持回放。
+- **故障追溯**：关键事件和事前有效摘要进入 NOR 队列，云后台完成数据库提交后返回应用确认；设备接收确认后移出，重发事件按身份去重。
+- **远程查看**：ESP8266 使用 TLS 校验 CA、服务器域名和证书有效期；云后台归档摘要与事件，小程序提供登录、双站状态、趋势和事件详情。
 
-- 总览：两站温湿度、振动峰值、CPU、内存、运行时长及更新时间；“查看趋势”分别打开对应从站。主站上传异常时显示“最后保存的读数”。
-- 趋势：最近 1 分钟或 10 分钟的已上传摘要，数据缺失、停止或重新启动时断开曲线。
-- 历史事件：按主站/星火/龙芯筛选，向前翻页；区分设备记录和云端发现的中断。
-- 事件详情：事件前最后有效读数、前 60 秒至后 30 秒的可用云端曲线、已知事实与待检查项。主站中断事件可切换两台从站。
-- 设备信息：当前存储介质、主站温度、星火记录写入错误、总线应答超时及校验错误。
-- 微信登录及设备配对：AppSecret 留在服务端，客户端只保存可过期的登录会话。
+星火记录目标约 10 Hz，龙芯目标约 1 Hz；云端约每秒保存摘要。振动值是现有采样的每秒峰值，并非 RMS、频谱或动作分类。MQTT 使用 QoS0，可靠补传来自应用层队列、确认和数据库去重。
 
-## 信息含义与能力边界
+## 仓库结构
 
-云端约每秒保存一次摘要，默认保留 30 天。这不是 TF 的 10 Hz 六轴原始波形。关键事件可靠补传版本将事件和一份事前有效摘要保存在主站 NOR，收到云端数据库保存确认后移出队列；全部断网期间样本不会自动出现在云端。详见[可靠补传说明](可靠补传说明.md)，实机部署结果以验证记录为准；MQTT 本身仍为 QoS0。
+| 路径 | 内容 |
+|---|---|
+| [`firmware/d121/`](firmware/d121/) | 主站项目源码、SDK 差异、板级配置和固定上游版本 |
+| [`firmware/star-stm32f407/`](firmware/star-stm32f407/) | 星火地址 1 源码、驱动、RT-Thread / STM32 BSP 与构建清单 |
+| [`firmware/loongson-slave2/`](firmware/loongson-slave2/) | 龙芯地址 2 程序、服务、安装脚本与测试 |
+| [`firmware/esp8266-at/`](firmware/esp8266-at/) | ESP-AT TLS、自动校时和专用引脚定制源码 |
+| [`firmware/common/`](firmware/common/) | 三端使用的公共 Modbus RTU 协议头 |
+| [`backend/`](backend/) / [`miniprogram/`](miniprogram/) | 云端归档服务、数据库、接口和微信原生小程序 |
+| [`docs/`](docs/) | 寄存器表、接线示意、交付与拍摄资料、验收记录 |
 
-星火振动通过事件主题上的独立 v4 短包上传：`{"v":4,"d":[开机编号,采集编号,运行秒数,峰值mg,有效采样数]}`。每点取近 1 秒已有 10 Hz 采样中的最大 `abs(加速度幅值-1g)`，手机显示 g；无有效 IMU 样本为 null，不能显示为零。后台按开机、采集和运行秒数匹配，兼容报文先后到达；早期历史没有振动数据时留空。该指标不等同于 RMS、频谱或更高频的振动测量。
+## 接线与协议
 
-手机预览当前版本 `2026.10.13.2` 在总览顶部显示，更新后台不会更新手机端预览代码。振动和两个趋势入口已由用户在重新扫描新预览码后确认，真实晃动时数值变化正常。
+星火为 Modbus 从站地址 1，龙芯为地址 2；RS485 为 115200 / 8N2。详细地址、单位和有效性见[寄存器表](docs/Modbus寄存器表V1.md)。
 
-云端正常接收时，15 秒没有新摘要才产生“主站上传中断”。后台自身连接异常或刚启动还没有新包时显示“无法确认/等待新数据”，避免把后台故障当作设备故障。单台从站离线和整个主站上传中断分开显示。
+NodeMCU 使用独立 USB 供电：D121 PA2/TX → NodeMCU D7/GPIO13/RX，D121 PA3/RX ← D8/GPIO15/TX，GND 共地；两板 3.3V 不连接。原 RX/TX 保留 USB 烧录用途。见[引脚位置图](docs/delivery/assets/wiring.png)。
 
-“云端发现中断时间”是后台发现的时刻，真实中断可能更早。“推算发生时间”由同次开机的运行时长和云端接收时间推算；没有可靠时间参照时显示“云端接收时间”。列表按新收到的记录排序，所以补传的旧事件可能在顶部。
+## 构建与测试
 
-中断原因必须有证据：恢复后开机编号变化能说明主站重新启动，不能单凭这一点断言掉电；同一次开机则建议检查网络、ESP8266 串口或主动暂停。页面不会把通信中断直接写成电源故障。当前没有微信订阅消息主动推送，也没有远程启停控制。
-
-## 本机启动与检查
-
-新电脑克隆仓库后，先创建虚拟环境并安装 `requirements.lock.txt`。测试可在未提供私有配置的情况下独立运行；后台只有在启动服务时才加载实际配置并连接数据库。
+### 云后台和小程序
 
 ```powershell
 python -m venv .venv
 & .\.venv\Scripts\python.exe -m pip install -r requirements.lock.txt
 if (!(Test-Path config.private.json)) { Copy-Item config.example.json config.private.json }
-```
-
-复制配置只用于新电脑，不能覆盖已有的 `config.private.json`。正式接收时填好后台 MQTT 账号、设备主题和微信配置；`tools/bootstrap_bemfa.py` 可根据私有配置内的 UID 生成独立后台接收账号。
-
-使用已安装的 `.venv`：
-
-```powershell
-Set-Location 'D:\codex相关项目\D121远程监控小程序'
-& .\tools\start_local.ps1
 & .\.venv\Scripts\python.exe -m pytest -q
-node .\tests\client.test.cjs
-& .\.venv\Scripts\python.exe .\tools\verify_local.py --expected-storage 'TF 卡'
+node tests/client.test.cjs
 ```
 
-若板端确实降级至 NOR，检查时明确指定 `--expected-storage '板载 Flash'`。这不代表 TF 故障已解决。
+已有私有配置时不要覆盖。开发者工具导入 `miniprogram/`；实际账号、数据库和配对信息使用本机私有配置或部署环境变量，不能提交仓库。后端本地启动、云托管与备份恢复见[云端说明](docs/云端使用说明.md)。
 
-后台仅监听 `127.0.0.1:8765`；模拟器本地登录通过调试工具注入会话，不把联调密钥写入小程序。手机不能把 `127.0.0.1` 当作电脑地址。真实微信登录必须补齐 AppSecret、配对或允许的微信用户及云端路由。
+### 星火 STM32F407
 
-`config.private.json` 是本机私有配置，禁止提交、截图或打包上传源码。`config.example.json` 只提供字段说明。`data/monitor.db` 和 WAL 是现有历史，不能直接删除来“修复”连接。
-
-## 微信云托管部署
-
-完整的填表步骤见 [云托管开通与部署.md](云托管开通与部署.md)。可部署源码由下面的工具生成，白名单打包，不包含设备私钥、AppSecret、本机数据库或用户会话。
+提供相对路径构建脚本，使用已验证的 RT-Thread Studio ARM GCC 5.4.1 工具链：
 
 ```powershell
-& .\.venv\Scripts\python.exe .\tools\package_cloud.py
+python tools/build_star.py --toolchain '工具链的bin目录'
 ```
 
-输出 `output/d121-wechat-cloud-source.zip`。云端历史使用独立 MySQL，不使用容器临时文件；服务保持一个常驻实例，只有一个采集进程。手机走 `wx.cloud.callContainer`。
+脚本编译 `build-manifest.json` 中的 166 个源文件，输出 `firmware/star-stm32f407/build/rtthread.bin`；只编译，不烧录。历史 Studio 工程也保留，但迁移目录后应在 Studio 中重新配置工具链与路径。见[星火说明](firmware/star-stm32f407/README.md)。
 
-现有本机历史可在云端空库、目标采集服务尚未启动时，通过 `tools/migrate_history.py --execute` 迁移。连接信息通过私有 `MYSQL_*` 环境变量提供；脚本拒绝覆盖非空目标，不迁移本机登录会话或成员。首版服务已经启动，本机历史未迁移，不能假定目标库为空或强行清库。
+### 龙芯从站
 
-## 验证记录
+```sh
+cd firmware/loongson-slave2
+make test
+make package  # 需要 LoongArch64 交叉工具链；可用 TOOLCHAIN=... 指定前缀
+```
 
-见 [验证记录.md](验证记录.md)。区分主机单元测试、开发者工具运行、真实开发板联调和云端验收。`tools/cloud_smoke.cjs` 通过真实 `callContainer` 和 `wx.login` 检查云服务，不使用模拟登录或本机联调令牌。账户密钥和配对码只从本机私有配置读取，不输出到日志。
+`make test` 在 Linux 主机运行单元、模拟 GPIO 运行路径和 PTY 集成测试；它不替代真实 RS485 电气验证。部署与现有系统重启限制见[龙芯说明](firmware/loongson-slave2/README.md)。
 
-数据库日常备份及隔离恢复工具、本机历史演练和真实云 MySQL 恢复证据见 [数据库备份与恢复.md](数据库备份与恢复.md)。2026-10-22 已发布 `d121-monitor-015`，通过真实微信登录、双站及历史查询、会话撤销和生产数据库隔离恢复验收。新容器包含运维工具，可显式读取已有 MYSQL_* 运行配置；工具拒绝覆盖运行库或已有恢复目标。10/25 设备 TLS 实机通过，手机移动网络四项访问获用户真机确认；长期观测按用户要求暂停。
+### D121 与 ESP8266 源码准备
+
+需要 Git 和 Python 3.9+。以下命令在新的目标目录检出固定上游提交，校验并应用仓库内项目覆盖文件；非干净的已有目录会被拒绝。
+
+```powershell
+python tools/prepare_vendor.py d121 --destination ../d121-sdk
+python tools/prepare_vendor.py esp8266-at --destination ../esp-at
+```
+
+D121 使用 ArtInChip SDK 的交叉工具链和 SCons 构建，存储配置以板级 defconfig 与实际硬件为准。ESP8266 还需固定版本的 ESP8266 RTOS SDK、子模块与 LX106 工具链。具体步骤见[D121 说明](firmware/d121/README.md)和[ESP8266 说明](firmware/esp8266-at/README.md)。这些是厂商 SDK 的外部构建依赖，不包含用户私有配置。
+
+## 验收与边界
+
+截至 2026-10-25 的记录：独立 Modbus 工具在真实 RS485 总线上每站交替读取 20 次；设备 TLS 的错误 CA、错误域名及过期证书拒绝对照通过；短时停传和单站恢复后关键事件补传成功；真实微信云端 15 项通过，用户确认手机移动网络下登录、双站实时数据、历史列表和事件详情均正常。[验收摘要](docs/evidence/acceptance-summary.json)与[交付说明书](docs/delivery/D121_交付说明书.pdf)包含证据和适用范围。
+
+长期观测按用户要求暂停。完整离线原始波形上云、精细动作分类、微信主动通知和远程控制尚未实现；龙芯普通系统软件重启仍有驱动崩溃问题，冷启动与从站服务恢复已有记录。手机实测不等于小程序公众版审核通过。
+
+[拍摄与发言指南](docs/delivery/D121_拍摄与发言指南.pdf)包含分镜和口播；[离线提词器](docs/delivery/演示提词器.html)和[讲解页](docs/delivery/演示讲解页.html)可下载后在浏览器打开。实机视频由使用者按指南拍摄。
+
+## 第三方源码
+
+星火目录包含 RT-Thread 与 STM32 厂商组件，保留其原有许可证与版权说明。D121 SDK、ESP-AT、ESP8266 RTOS SDK 及所用工具链分别由各上游提供，使用时请查看各上游随附的授权文件；本仓库没有将第三方源码统一改成新的许可证。

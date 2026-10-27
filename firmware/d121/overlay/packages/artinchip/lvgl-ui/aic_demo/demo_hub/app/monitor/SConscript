@@ -1,0 +1,16 @@
+import os
+from building import *
+
+cwd = GetCurrentDir()
+src = Glob('*.c')
+
+# 数据源头文件：blackbox(bb.h) + rs485(rs485_proto.h)，都在 helloworld 下
+sdk_root = Dir('#').abspath
+hw = os.path.join(sdk_root, 'application', 'rt-thread', 'helloworld')
+CPPPATH = [cwd,
+           os.path.join(hw, 'blackbox'),
+           os.path.join(hw, 'rs485')]
+
+group = DefineGroup('LVGL-port', src, depend = ['AIC_LVGL_DEMO_HUB_DEMO'], CPPPATH = CPPPATH)
+
+Return('group')

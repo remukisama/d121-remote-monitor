@@ -1,0 +1,24 @@
+[Unit]
+Description=Loongson LS2K0300 system metrics RS485 slave
+After=systemd-udev-trigger.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+NotifyAccess=main
+RuntimeDirectory=loongson-slave2
+RuntimeDirectoryMode=0755
+ExecStart=/usr/local/sbin/loongson-slave2 --address 2 --sample-ms 1000 --stats /run/loongson-slave2/status.json
+ExecStopPost=/usr/local/sbin/loongson-slave2 --release-en
+Restart=on-failure
+RestartSec=2
+WatchdogSec=10
+TimeoutStartSec=15
+TimeoutStopSec=3
+NoNewPrivileges=true
+LimitCORE=0
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

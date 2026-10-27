@@ -1,0 +1,72 @@
+{
+  "upstream": "https://github.com/espressif/esp-at.git",
+  "base_commit": "5249c31d1df78c68622b33ffa9fd82b9991c28be",
+  "source_checkpoint": "31dd9e475ff592a8d6ce3a0da077ebb0bd6d3d05",
+  "snapshot": "Working files, normalized LF; unchanged vendor files supplied by pinned upstream",
+  "files": [
+    {
+      "path": "D121_TLS_BUILD.md",
+      "bytes": 3896,
+      "sha256": "ad8828dfcc4e86413c555596c5c7d0bddf1a0b7dd8998f24deb7bf4815e2e6f9"
+    },
+    {
+      "path": "components/customized_partitions/CMakeLists.txt",
+      "bytes": 2954,
+      "sha256": "054221b74f0b89dc98ac2e0a7683037f4dd28e7514d51f95447258769f2dede0"
+    },
+    {
+      "path": "components/customized_partitions/generation_tools/client_ca.py",
+      "bytes": 2671,
+      "sha256": "09a4aa22a0da52c4b8fcbe4224c7b4e099ee492fb694da22d3e9e912756d026e"
+    },
+    {
+      "path": "components/customized_partitions/raw_data/client_ca/client_ca_00.crt",
+      "bytes": 2053,
+      "sha256": "e6c62d3f63ba03f4dac458b7dac6c09eb4d71cc3c6621769c3883ed51677c01c"
+    },
+    {
+      "path": "components/customized_partitions/raw_data/client_ca/client_ca_01.crt",
+      "bytes": 940,
+      "sha256": "d69f7b57250536f57ffba92cffe82a8bbcb16e03a9a2607ec967f362ce83f9ce"
+    },
+    {
+      "path": "components/customized_partitions/raw_data/client_ca/client_ca_02.crt",
+      "bytes": 2151,
+      "sha256": "fcdec7a27e6b8f7602d932c5d879ee14d03add108bd54548579429a48608a695"
+    },
+    {
+      "path": "components/customized_partitions/raw_data/factory_param/factory_param_data.csv",
+      "bytes": 1793,
+      "sha256": "4774ac069fe24c2d6385df3b4fd09219319cb96fd65b9a29806532d92c568fcd"
+    },
+    {
+      "path": "main/app_main.c",
+      "bytes": 8488,
+      "sha256": "9fa2e76370f0323db02d74a7ab4b5b70bb6f8d2805d00f584ab380b58e7a27e7"
+    },
+    {
+      "path": "module_config/module_esp8266_default/sdkconfig.defaults",
+      "bytes": 3201,
+      "sha256": "5a2620de5234f666c130ab577f50e7f70496a509ed63e6cc0afd751bd71b52be"
+    },
+    {
+      "path": "patches/sdk-ff16a35-unicode-ldgen.patch",
+      "bytes": 965,
+      "sha256": "248c80a6fd467afe6f826080ec761066e91204dd95b4b468e107f4035f1c9892"
+    },
+    {
+      "path": "tools/d121_build.sh",
+      "bytes": 1347,
+      "sha256": "759d3f4604a5c8dc7b444531bedd5fda17639e83ffab420e9a2f90ab4f718c0b"
+    },
+    {
+      "path": "tools/d121_host_compat.py",
+      "bytes": 662,
+      "sha256": "937e118c2d265add69c1828ab9900e67fc3d3dc1135b0f78aaebc214f5e6b17d"
+    }
+  ],
+  "delete": [],
+  "excluded_local_or_tool_state": [
+    ".gitignore"
+  ]
+}
