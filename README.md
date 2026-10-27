@@ -6,7 +6,7 @@
 
 ![系统架构示意](docs/assets/architecture.png)
 
-本仓库包含项目主站、两个从站、网络模块定制代码、云后台、小程序与交付资料。星火从站包含其所需的 RT-Thread / STM32 BSP；D121 和 ESP8266 的厂商 SDK 通过固定的上游提交与仓库内覆盖源码重建。云后台与小程序原有目录保持不变，云容器仍从根目录 Dockerfile 构建。
+本仓库包含主站、两个从站、网络模块定制代码、云后台、小程序和技术文档。星火从站包含其所需的 RT-Thread / STM32 BSP；D121 和 ESP8266 的厂商 SDK 通过固定的上游提交与仓库内覆盖源码重建。云后台与小程序原有目录保持不变，云容器从根目录 Dockerfile 构建。
 
 [查看发布版本](https://github.com/remukisama/d121-remote-monitor/releases/latest)
 
