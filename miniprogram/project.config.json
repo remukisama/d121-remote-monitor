@@ -1,7 +1,7 @@
 {
   "description": "D121 双从站远程监控与历史事件",
   "projectname": "D121远程监控",
-  "appid": "YOUR_WECHAT_APPID",
+  "appid": "touristappid",
   "compileType": "miniprogram",
   "libVersion": "latest",
   "miniprogramRoot": "./",
