@@ -5,6 +5,11 @@
   "snapshot": "Working files, normalized LF; unchanged vendor files supplied by pinned upstream",
   "files": [
     {
+      "path": "CMakeLists.txt",
+      "bytes": 2690,
+      "sha256": "061c61e31257b8a4906d8ff17f8a4fff5b21f18fac935dbf6a7df43661fe5d4e"
+    },
+    {
       "path": "D121_TLS_BUILD.md",
       "bytes": 3896,
       "sha256": "ad8828dfcc4e86413c555596c5c7d0bddf1a0b7dd8998f24deb7bf4815e2e6f9"
@@ -68,5 +73,11 @@
   "delete": [],
   "excluded_local_or_tool_state": [
     ".gitignore"
+  ],
+  "integration_changes": [
+    {
+      "path": "CMakeLists.txt",
+      "reason": "Require bootloader before combining the factory image in a clean parallel build"
+    }
   ]
 }
