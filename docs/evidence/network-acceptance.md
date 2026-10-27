@@ -10,7 +10,7 @@ D121 与 NodeMCU 已通过新引脚连接并实际完成加密 MQTT 上传、云
 | PA3 / RX | D8 / GPIO15 / TX | 主站接收 AT 应答 |
 | GND | GND | 共地 |
 
-![接线位置](../delivery/assets/wiring.png)
+![接线位置](../assets/wiring.png)
 
 NodeMCU 保留独立 USB 供电，两板 3.3V 不相连。原 RX/TX 不再接 D121；COM10 对应 USB 桥和 ROM 烧录入口，最终固件的日常 AT 口在 D7/D8。短时测试只打开 USB 串口并保持 DTR/RTS 关闭，没有从电脑发送数据，也没有触发 ROM 复位。
 

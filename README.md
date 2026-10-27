@@ -4,11 +4,11 @@
 
 本次实物演示使用手边的两台设备作为从站：星火 STM32F407 采集温湿度和六轴数据，龙芯 LS2K0300 提供系统运行指标。当前代码和界面针对这两个从站实现和验证；接入更多设备需要相应扩展采集、数据模型及界面，不能直接视为已经验证。
 
-![系统架构示意](docs/delivery/assets/architecture.png)
+![系统架构示意](docs/assets/architecture.png)
 
 本仓库包含项目主站、两个从站、网络模块定制代码、云后台、小程序与交付资料。星火从站包含其所需的 RT-Thread / STM32 BSP；D121 和 ESP8266 的厂商 SDK 通过固定的上游提交与仓库内覆盖源码重建。云后台与小程序原有目录保持不变，云容器仍从根目录 Dockerfile 构建。
 
-[下载发布版本、已验收固件与演示资料](https://github.com/remukisama/d121-remote-monitor/releases/latest)
+[查看发布版本](https://github.com/remukisama/d121-remote-monitor/releases/latest)
 
 ## 系统功能
 
@@ -28,13 +28,13 @@
 | [`firmware/esp8266-at/`](firmware/esp8266-at/) | ESP-AT TLS、自动校时和专用引脚定制源码 |
 | [`firmware/common/`](firmware/common/) | 三端使用的公共 Modbus RTU 协议头 |
 | [`backend/`](backend/) / [`miniprogram/`](miniprogram/) | 云端归档服务、数据库、接口和微信原生小程序 |
-| [`docs/`](docs/) | 寄存器表、接线示意、交付与拍摄资料、验收记录 |
+| [`docs/`](docs/) | 寄存器表、接线示意和验证记录 |
 
 ## 接线与协议
 
 星火为 Modbus 从站地址 1，龙芯为地址 2；RS485 为 115200 / 8N2。详细地址、单位和有效性见[寄存器表](docs/Modbus寄存器表V1.md)。
 
-NodeMCU 使用独立 USB 供电：D121 PA2/TX → NodeMCU D7/GPIO13/RX，D121 PA3/RX ← D8/GPIO15/TX，GND 共地；两板 3.3V 不连接。原 RX/TX 保留 USB 烧录用途。见[引脚位置图](docs/delivery/assets/wiring.png)。
+NodeMCU 使用独立 USB 供电：D121 PA2/TX → NodeMCU D7/GPIO13/RX，D121 PA3/RX ← D8/GPIO15/TX，GND 共地；两板 3.3V 不连接。原 RX/TX 保留 USB 烧录用途。见[引脚位置图](docs/assets/wiring.png)。
 
 ## 构建与测试
 
@@ -83,11 +83,9 @@ D121 使用 ArtInChip SDK 的交叉工具链和 SCons 构建，存储配置以�
 
 ## 实测结果
 
-截至 2026-10-25 的记录：独立 Modbus 工具在真实 RS485 总线上每站交替读取 20 次；设备 TLS 的错误 CA、错误域名及过期证书拒绝对照通过；短时停传和单站恢复后关键事件补传成功；真实微信云端 15 项通过，用户确认手机移动网络下登录、双站实时数据、历史列表和事件详情均正常。[验收摘要](docs/evidence/acceptance-summary.json)与[交付说明书](docs/delivery/D121_交付说明书.pdf)包含证据和适用范围。
+截至 2026-10-25 的记录：独立 Modbus 工具在真实 RS485 总线上每站交替读取 20 次；设备 TLS 的错误 CA、错误域名及过期证书拒绝对照通过；短时停传和单站恢复后关键事件补传成功；真实微信云端 15 项通过，用户确认手机移动网络下登录、双站实时数据、历史列表和事件详情均正常。详见[验收摘要](docs/evidence/acceptance-summary.json)。
 
 上述结果来自当前两台从站和受控测试场景；长期运行及更多从站的表现需要另行验证。龙芯普通系统软件重启的已知问题和部署注意事项见[龙芯说明](firmware/loongson-slave2/README.md)。
-
-[拍摄与发言指南](docs/delivery/D121_拍摄与发言指南.pdf)包含分镜和口播；[离线提词器](docs/delivery/演示提词器.html)和[讲解页](docs/delivery/演示讲解页.html)可下载后在浏览器打开。实机视频由使用者按指南拍摄。
 
 ## 第三方源码
 
