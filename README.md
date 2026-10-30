@@ -1,14 +1,50 @@
-# D121 多从机工业场景监控系统
+# D121 多从机设备监控与异常追溯系统
+
+> 2026 RT-Thread 嵌入式电子设计大赛参赛作品 · 玄铁 D121 + RT-Thread + LVGL
 
 设备运行过程中，除了知道当前状态，还需要在出现异常时找到当时发生了什么。本项目面向多从机工业场景，以玄铁 D121 为主站，通过 RS485 总线集中采集设备数据，在本地记录和回放，并把摘要与关键事件上传云端，供微信小程序查看。
 
 本次实物演示使用手边的两台设备作为从站：星火 STM32F407 采集温湿度和六轴数据，龙芯 LS2K0300 提供系统运行指标。当前代码和界面针对这两个从站实现和验证；接入更多设备需要相应扩展采集、数据模型及界面，不能直接视为已经验证。
+
+![D121、星火与龙芯从站及网络模块组成的实物系统](docs/assets/demo/system.jpg)
+
+*系统实物：D121 主站、星火与龙芯从站及 NodeMCU 网络模块。照片和下方截图展示拍摄时的状态，不代表设备当前在线。*
+
+## 一眼了解作品
+
+| 功能 | 当前实现 |
+|---|---|
+| 双站采集 | D121 使用 RS485 / Modbus RTU 轮询两台不同类型的从站，分别维护在线与数据状态 |
+| 本地记录与回看 | 触摸屏查看实时数据、趋势和事件；采集数据与事件可记录到 TF 卡并回放 |
+| 异常追溯 | 记录通信中断、恢复及振动越限等事件，支持查看事件附近的数据 |
+| 关键事件补传 | 网络中断时将关键事件及可用事前摘要保存到 NOR 队列，恢复后等待云端保存确认再移除 |
+| 远程查看 | 微信小程序查看两站状态、趋势、历史事件和详情 |
+
+## 实机与界面
+
+<table>
+  <tr><td align="center"><img src="docs/assets/demo/star-overview.jpg" alt="星火从站本地总览" width="440"><br>星火从站：温湿度及本地记录状态</td><td align="center"><img src="docs/assets/demo/loongson-overview.jpg" alt="龙芯从站本地总览" width="440"><br>龙芯从站：CPU、内存及本地记录状态</td></tr>
+</table>
+
+![振动越限事件的内存回放画面](docs/assets/demo/event-replay.jpg)
+
+*上图为本地振动越限事件的内存回放画面；TF 历史回放是另一个记录与读取路径。*
+
+<table>
+  <tr><td align="center"><img src="docs/assets/demo/mini-overview.jpg" alt="小程序远程总览" width="230"><br>远程总览</td><td align="center"><img src="docs/assets/demo/mini-trend.jpg" alt="小程序星火温度趋势" width="230"><br>云端摘要趋势</td><td align="center"><img src="docs/assets/demo/mini-events.jpg" alt="小程序历史事件列表" width="230"><br>历史事件</td></tr>
+</table>
+
+*小程序截图来自手机拍摄时的实际界面；事件的时间来源以页面标注为准。趋势显示已上传摘要，并非完整离线原始波形。*
+
+## 系统架构
 
 ![系统架构示意](docs/assets/architecture.png)
 
 本仓库包含主站、两个从站、网络模块定制代码、云后台、小程序和技术文档。星火从站包含其所需的 RT-Thread / STM32 BSP；D121 和 ESP8266 的厂商 SDK 通过固定的上游提交与仓库内覆盖源码重建。云后台与小程序原有目录保持不变，云容器从根目录 Dockerfile 构建。
 
 [查看发布版本](https://github.com/remukisama/d121-remote-monitor/releases/latest)
+
+项目的 RT-Thread 线程、同步、存储设计与验收范围见[软件设计与验证说明](docs/软件设计与验证.md)。
 
 ## 系统功能
 
@@ -81,11 +117,19 @@ python tools/prepare_vendor.py esp8266-at --destination ../esp-at
 
 D121 使用 ArtInChip SDK 的交叉工具链和 SCons 构建，存储配置以板级 defconfig 与实际硬件为准。ESP8266 还需固定版本的 ESP8266 RTOS SDK、子模块与 LX106 工具链。具体步骤见[D121 说明](firmware/d121/README.md)和[ESP8266 说明](firmware/esp8266-at/README.md)。这些是厂商 SDK 的外部构建依赖，不包含用户私有配置。
 
-## 实测结果
+## 验收结果与范围
 
-截至 2026-10-25 的记录：独立 Modbus 工具在真实 RS485 总线上每站交替读取 20 次；设备 TLS 的错误 CA、错误域名及过期证书拒绝对照通过；短时停传和单站恢复后关键事件补传成功；真实微信云端 15 项通过，用户确认手机移动网络下登录、双站实时数据、历史列表和事件详情均正常。详见[验收摘要](docs/evidence/acceptance-summary.json)。
+以下是已有的历史验收记录，不代表本次查看时设备或云服务的实时状态。
 
-上述结果来自当前两台从站和受控测试场景；长期运行及更多从站的表现需要另行验证。龙芯普通系统软件重启的已知问题和部署注意事项见[龙芯说明](firmware/loongson-slave2/README.md)。
+| 验收项目 | 记录结果 | 证据与边界 |
+|---|---|---|
+| Modbus RTU | 独立 MinimalModbus 工具经真实 RS485 总线交替读取两站，各 20 次 | 经 D121 串口桥转发，非独立 USB-RS485 适配器；见[迁移与实机记录](docs/evidence/modbus-acceptance.md) |
+| 受控短时故障 | 暂停网络 20 秒并停止/恢复星火应答；龙芯继续采集，2 条事件排队后清空 | 见[短时故障记录](docs/evidence/short-fault-result.json)和[网络验收说明](docs/evidence/network-acceptance.md)；不代表长期稳定性 |
+| 设备 TLS | 正确连接及错误 CA、错误域名、过期证书拒绝对照通过 | 对应设备到 MQTT 服务的链路；见[网络验收说明](docs/evidence/network-acceptance.md) |
+| 云端与手机 | 真实微信云端 15 项复验通过；手机移动网络的登录、双站实时数据、历史列表和事件详情经用户确认正常 | 手机结果为用户反馈，没有独立抓包；见[验收摘要](docs/evidence/acceptance-summary.json) |
+| 主机自动化 | 后端、客户端和部分固件主机测试通过 | [GitHub Actions](https://github.com/remukisama/d121-remote-monitor/actions)；不替代完整固件构建或硬件验收 |
+
+以上结果对应当前两台从站与记录中的受控场景。长期运行、更多从站、任意时刻断电零损失尚未验收；完整离线原始波形上云、动作分类、微信主动通知及远程控制未实现。龙芯普通系统软件重启的已知问题见[龙芯说明](firmware/loongson-slave2/README.md)。
 
 ## 第三方源码
 
