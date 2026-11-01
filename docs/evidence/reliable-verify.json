@@ -1,0 +1,166 @@
+{
+  "mode": "verify",
+  "checked_at": "2026-10-13T13:13:03.660Z",
+  "success": true,
+  "checks": [
+    {
+      "name": "Actual NOR records survived D121 restart and drained only after cloud ACK",
+      "old_boot": 13,
+      "new_boot": 14,
+      "acks": 8
+    },
+    {
+      "name": "MySQL saved one original outage/recovery pair and replayed pre-outage readings",
+      "incident_id": 253,
+      "recovery_id": 255,
+      "original_boot": 13,
+      "collection": 1,
+      "vibration": 0.016
+    },
+    {
+      "name": "Retry did not duplicate events; older history remains readable"
+    },
+    {
+      "name": "TF recording and both live nodes resumed after restart",
+      "boot": 14,
+      "storage": "TF 卡"
+    }
+  ],
+  "after": {
+    "boot": 14,
+    "queued": 0,
+    "durable": 1,
+    "app_ack": 8,
+    "events": 2,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 2496
+  },
+  "incident": {
+    "id": 253,
+    "received": 1791897157.189129,
+    "occurred": 1791896708.7669604,
+    "boot": 13,
+    "collection": 1,
+    "node": 1,
+    "uptime": 515.746,
+    "title": "通信中断",
+    "source": "device",
+    "resolved": 1791896714.7339604,
+    "time_note": "发生时间由主站运行时间推算；接收时间单独显示",
+    "snapshot": {
+      "boot": 13,
+      "collection": 1,
+      "uptime_s": 515,
+      "running": true,
+      "received_at": 1791896708.0209603,
+      "retained": true,
+      "replayed": true,
+      "time_estimated": true,
+      "nodes": [
+        {
+          "node": 1,
+          "name": "星火传感从站",
+          "online": true,
+          "fresh": true,
+          "flags": 33,
+          "temperature": 25.14,
+          "humidity": 52.7,
+          "vibration": 0.016,
+          "vibration_samples": 10
+        },
+        {
+          "node": 2,
+          "name": "龙芯系统从站",
+          "online": true,
+          "fresh": true,
+          "valid": 15,
+          "cpu": 1,
+          "memory_mb": 64.109375,
+          "load": 0,
+          "uptime_s": 17820
+        }
+      ]
+    },
+    "diagnostic": {
+      "boot": 13,
+      "collection": 1,
+      "uptime_s": 515,
+      "storage": "TF 卡",
+      "write_errors": 0,
+      "dropped_frames": 0,
+      "bus_ok": 5354,
+      "bus_timeouts": 41,
+      "bus_crc_errors": 0,
+      "chip_temperature": 37.1
+    }
+  },
+  "recovery": {
+    "id": 255,
+    "received": 1791897158.1491096,
+    "occurred": 1791896714.7339604,
+    "boot": 13,
+    "collection": 1,
+    "node": 1,
+    "uptime": 521.713,
+    "title": "通信恢复",
+    "source": "device",
+    "resolved": null,
+    "time_note": "发生时间由主站运行时间推算；接收时间单独显示",
+    "snapshot": {
+      "boot": 13,
+      "collection": 1,
+      "uptime_s": 515,
+      "running": true,
+      "received_at": 1791896708.0209603,
+      "retained": true,
+      "replayed": true,
+      "time_estimated": true,
+      "nodes": [
+        {
+          "node": 1,
+          "name": "星火传感从站",
+          "online": true,
+          "fresh": true,
+          "flags": 33,
+          "temperature": 25.14,
+          "humidity": 52.7,
+          "vibration": 0.016,
+          "vibration_samples": 10
+        },
+        {
+          "node": 2,
+          "name": "龙芯系统从站",
+          "online": true,
+          "fresh": true,
+          "valid": 15,
+          "cpu": 1,
+          "memory_mb": 64.109375,
+          "load": 0,
+          "uptime_s": 17820
+        }
+      ]
+    },
+    "diagnostic": {
+      "boot": 13,
+      "collection": 1,
+      "uptime_s": 515,
+      "storage": "TF 卡",
+      "write_errors": 0,
+      "dropped_frames": 0,
+      "bus_ok": 5354,
+      "bus_timeouts": 41,
+      "bus_crc_errors": 0,
+      "chip_temperature": 37.1
+    }
+  },
+  "_publication": {
+    "archived_on": "2026-11-01",
+    "original_file": "output/reliable-verify.json",
+    "original_sha256": "ee62e1ed7b2c721aca19f6ba50307aeb59716eca709fae99a0939a0322898dc5",
+    "format": "allowlisted historical excerpt",
+    "omitted": "final_status, full curve points, extended diagnostics and non-whitelisted fields; original private report retained locally"
+  }
+}

@@ -36,6 +36,7 @@ jobs:
           python-version: '3.11'
       - run: python tools/check_project.py
       - run: gcc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer tests/test_modbus_core.c -o /tmp/d121-modbus-test && /tmp/d121-modbus-test
+      - run: python tools/test_outbox.py
       - run: make -C firmware/loongson-slave2 test
 
   mini-program:

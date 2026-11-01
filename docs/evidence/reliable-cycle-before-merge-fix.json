@@ -1,0 +1,65 @@
+{
+  "mode": "cycle",
+  "checked_at": "2026-10-13T12:59:07.669Z",
+  "success": false,
+  "error": "Original pre-outage context was not archived",
+  "checks": [
+    {
+      "name": "Outage and recovery collected while cloud was stopped, with committed NOR journal",
+      "pending": 2,
+      "journal": 1600,
+      "boot": 13
+    },
+    {
+      "name": "Reconnect replay received application acknowledgments and cleared queue",
+      "pending": 0,
+      "acks": 8,
+      "delivered": 2
+    }
+  ],
+  "baseline": {
+    "boot": 13,
+    "queued": 0,
+    "durable": 1,
+    "app_ack": 2,
+    "events": 2,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 832,
+    "last_id": 244,
+    "collection": 1
+  },
+  "queued": {
+    "boot": 13,
+    "queued": 2,
+    "durable": 1,
+    "app_ack": 2,
+    "events": 2,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 1600
+  },
+  "after": {
+    "boot": 13,
+    "queued": 0,
+    "durable": 1,
+    "app_ack": 10,
+    "events": 4,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 1664
+  },
+  "_publication": {
+    "archived_on": "2026-11-01",
+    "original_file": "output/reliable-cycle-before-merge-fix.json",
+    "original_sha256": "76cdbd51f1369edd2b82d892ea28bab2467ced81815bacea098938f20c0ec594",
+    "format": "allowlisted historical excerpt",
+    "omitted": "final_status, full curve points, extended diagnostics and non-whitelisted fields; original private report retained locally"
+  }
+}

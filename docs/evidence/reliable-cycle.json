@@ -1,0 +1,199 @@
+{
+  "mode": "cycle",
+  "checked_at": "2026-10-13T13:14:06.696Z",
+  "success": true,
+  "checks": [
+    {
+      "name": "Outage and recovery collected while cloud was stopped, with committed NOR journal",
+      "pending": 2,
+      "journal": 4096,
+      "boot": 14
+    },
+    {
+      "name": "Reconnect replay received application acknowledgments and cleared queue",
+      "pending": 0,
+      "acks": 8,
+      "delivered": 2
+    },
+    {
+      "name": "MySQL saved one original outage/recovery pair and replayed pre-outage readings",
+      "incident_id": 263,
+      "recovery_id": 265,
+      "original_boot": 14,
+      "collection": 1,
+      "vibration": 0.016
+    },
+    {
+      "name": "Retry did not duplicate events; older history remains readable"
+    },
+    {
+      "name": "Both nodes live; TF capture unaffected",
+      "storage": "TF 卡",
+      "write_errors": 0,
+      "dropped_frames": 0
+    }
+  ],
+  "baseline": {
+    "boot": 14,
+    "queued": 0,
+    "durable": 1,
+    "app_ack": 10,
+    "events": 4,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 3328,
+    "last_id": 259,
+    "collection": 1
+  },
+  "queued": {
+    "boot": 14,
+    "queued": 2,
+    "durable": 1,
+    "app_ack": 10,
+    "events": 4,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 4096
+  },
+  "after": {
+    "boot": 14,
+    "queued": 0,
+    "durable": 1,
+    "app_ack": 18,
+    "events": 6,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 4160
+  },
+  "incident": {
+    "id": 263,
+    "received": 1791897275.0530262,
+    "occurred": 1791897258.478235,
+    "boot": 14,
+    "collection": 1,
+    "node": 1,
+    "uptime": 107.844,
+    "title": "通信中断",
+    "source": "device",
+    "resolved": 1791897265.1322174,
+    "time_note": "发生时间由主站运行时间推算；接收时间单独显示",
+    "snapshot": {
+      "boot": 14,
+      "collection": 1,
+      "uptime_s": 106,
+      "running": true,
+      "received_at": 1791897256.634235,
+      "retained": true,
+      "replayed": true,
+      "time_estimated": true,
+      "nodes": [
+        {
+          "node": 1,
+          "name": "星火传感从站",
+          "online": true,
+          "fresh": true,
+          "flags": 33,
+          "temperature": 25.66,
+          "humidity": 54.5,
+          "vibration": 0.016,
+          "vibration_samples": 10
+        },
+        {
+          "node": 2,
+          "name": "龙芯系统从站",
+          "online": true,
+          "fresh": true,
+          "valid": 15,
+          "cpu": 1,
+          "memory_mb": 64.109375,
+          "load": 0,
+          "uptime_s": 18371
+        }
+      ]
+    },
+    "diagnostic": {
+      "boot": 14,
+      "collection": 1,
+      "uptime_s": 106,
+      "storage": "TF 卡",
+      "write_errors": 0,
+      "dropped_frames": 0,
+      "bus_ok": 718,
+      "bus_timeouts": 0,
+      "bus_crc_errors": 0,
+      "chip_temperature": 37.8
+    }
+  },
+  "recovery": {
+    "id": 265,
+    "received": 1791897276.308369,
+    "occurred": 1791897265.1322174,
+    "boot": 14,
+    "collection": 1,
+    "node": 1,
+    "uptime": 113.919,
+    "title": "通信恢复",
+    "source": "device",
+    "resolved": null,
+    "time_note": "发生时间由主站运行时间推算；接收时间单独显示",
+    "snapshot": {
+      "boot": 14,
+      "collection": 1,
+      "uptime_s": 106,
+      "running": true,
+      "received_at": 1791897256.634235,
+      "retained": true,
+      "replayed": true,
+      "time_estimated": true,
+      "nodes": [
+        {
+          "node": 1,
+          "name": "星火传感从站",
+          "online": true,
+          "fresh": true,
+          "flags": 33,
+          "temperature": 25.66,
+          "humidity": 54.5,
+          "vibration": 0.016,
+          "vibration_samples": 10
+        },
+        {
+          "node": 2,
+          "name": "龙芯系统从站",
+          "online": true,
+          "fresh": true,
+          "valid": 15,
+          "cpu": 1,
+          "memory_mb": 64.109375,
+          "load": 0,
+          "uptime_s": 18371
+        }
+      ]
+    },
+    "diagnostic": {
+      "boot": 14,
+      "collection": 1,
+      "uptime_s": 106,
+      "storage": "TF 卡",
+      "write_errors": 0,
+      "dropped_frames": 0,
+      "bus_ok": 718,
+      "bus_timeouts": 0,
+      "bus_crc_errors": 0,
+      "chip_temperature": 37.8
+    }
+  },
+  "_publication": {
+    "archived_on": "2026-11-01",
+    "original_file": "output/reliable-cycle.json",
+    "original_sha256": "32859b2b795e87c18215bbdbb4c54569f4b33ea845f9c3209432f7e9df0c2de9",
+    "format": "allowlisted historical excerpt",
+    "omitted": "final_status, full curve points, extended diagnostics and non-whitelisted fields; original private report retained locally"
+  }
+}

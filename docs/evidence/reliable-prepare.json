@@ -1,0 +1,50 @@
+{
+  "mode": "prepare",
+  "checked_at": "2026-10-13T13:04:56.237Z",
+  "prepared": true,
+  "success": true,
+  "checks": [
+    {
+      "name": "Outage and recovery collected while cloud was stopped, with committed NOR journal",
+      "pending": 2,
+      "journal": 2432,
+      "boot": 13
+    },
+    {
+      "name": "TF files closed; queued events ready for a D121-only power cycle"
+    }
+  ],
+  "baseline": {
+    "boot": 13,
+    "queued": 0,
+    "durable": 1,
+    "app_ack": 10,
+    "events": 4,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 1664,
+    "last_id": 250,
+    "collection": 1
+  },
+  "queued": {
+    "boot": 13,
+    "queued": 2,
+    "durable": 1,
+    "app_ack": 10,
+    "events": 4,
+    "persist_errors": 0,
+    "full": 0,
+    "gaps": 0,
+    "retries": 0,
+    "journal": 2432
+  },
+  "_publication": {
+    "archived_on": "2026-11-01",
+    "original_file": "output/reliable-prepare.json",
+    "original_sha256": "bf27b09ee27a3d18d2c3f7c73cc25ea6e2ead0a08929d52265415ee5b2d7d149",
+    "format": "allowlisted historical excerpt",
+    "omitted": "final_status, full curve points, extended diagnostics and non-whitelisted fields; original private report retained locally"
+  }
+}

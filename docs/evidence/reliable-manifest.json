@@ -1,0 +1,46 @@
+{
+  "archived_on": "2026-11-01",
+  "scope": "Allowlisted excerpts of 2026-10-13 historical reports; no new device/cloud tests",
+  "files": [
+    {
+      "path": "reliable-cycle-before-merge-fix.json",
+      "bytes": 1536,
+      "sha256": "97842f596704ee82a2933a8f6a923f3c15626dfd9eae52c75ff6c22fe979791e",
+      "original_sha256": "76cdbd51f1369edd2b82d892ea28bab2467ced81815bacea098938f20c0ec594",
+      "original_checked_at": "2026-10-13T12:59:07.669Z",
+      "historical_success": false
+    },
+    {
+      "path": "reliable-cycle.json",
+      "bytes": 4771,
+      "sha256": "bf1d13a05b7cad4860c8645c7a4f6a375a756523ec0f6ea232f7b752ba0de25c",
+      "original_sha256": "32859b2b795e87c18215bbdbb4c54569f4b33ea845f9c3209432f7e9df0c2de9",
+      "original_checked_at": "2026-10-13T13:14:06.696Z",
+      "historical_success": true
+    },
+    {
+      "path": "reliable-prepare.json",
+      "bytes": 1222,
+      "sha256": "3b08471dc2e31431e1f03d624ac1c10c93e5ff788b56fbfab35ca2c6b7cb6b2b",
+      "original_sha256": "bf27b09ee27a3d18d2c3f7c73cc25ea6e2ead0a08929d52265415ee5b2d7d149",
+      "original_checked_at": "2026-10-13T13:04:56.237Z",
+      "historical_success": true
+    },
+    {
+      "path": "reliable-verify.json",
+      "bytes": 4152,
+      "sha256": "f0c7719e57998f0f2b669d76c3ac1014c4b92b1599e7a7f2855093fb763783a0",
+      "original_sha256": "ee62e1ed7b2c721aca19f6ba50307aeb59716eca709fae99a0939a0322898dc5",
+      "original_checked_at": "2026-10-13T13:13:03.660Z",
+      "historical_success": true
+    },
+    {
+      "path": "reliable-native.json",
+      "bytes": 585,
+      "sha256": "bd4b8b209306a6452a9a05ffba8639eceeb8636d5d435bd399bfae99fae05f8f",
+      "original_sha256": "e96cf2be825a091c573ac44abb41fd0f4cbf0222f5292539e5094bcd1640725d",
+      "original_checked_at": "2026-10-13T13:15:34.528Z",
+      "historical_success": true
+    }
+  ]
+}

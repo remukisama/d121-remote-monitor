@@ -1,0 +1,16 @@
+{
+  "checked_at": "2026-10-13T13:15:34.528Z",
+  "event_id": 253,
+  "success": true,
+  "boot": 13,
+  "snapshot_label": "读数时间（推算）",
+  "temperature": "25.1",
+  "vibration": "0.016",
+  "_publication": {
+    "archived_on": "2026-11-01",
+    "original_file": "output/reliable-native.json",
+    "original_sha256": "e96cf2be825a091c573ac44abb41fd0f4cbf0222f5292539e5094bcd1640725d",
+    "format": "allowlisted historical excerpt",
+    "omitted": "final_status, full curve points, extended diagnostics and non-whitelisted fields; original private report retained locally"
+  }
+}
