@@ -52,7 +52,7 @@ flowchart LR
 
 [查看发布版本](https://github.com/remukisama/d121-remote-monitor/releases/latest)
 
-项目的 RT-Thread 线程、同步、存储设计与验收范围见[软件设计与验证说明](docs/软件设计与验证.md)。
+项目的 RT-Thread 线程、设计取舍、项目实现与上游边界，以及一次异常快照修复案例见[软件设计与验证说明](docs/软件设计与验证.md)。
 
 参赛归档入口：[补传与主板重启证据](docs/evidence/reliable-replay.md)、[最终版本与固件下载说明](docs/发布与固件说明-20261101.md)。
 

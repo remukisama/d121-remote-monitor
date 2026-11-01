@@ -9,12 +9,13 @@ const reportPath=path.join(root,'output','reliable-'+mode+'.json')
 const guard=setTimeout(()=>{console.error('Reliable hardware QA timeout');process.exit(1)},180000);guard.unref()
 async function main(){
  if(!['cycle','prepare','verify'].includes(mode))throw new Error('Expected cycle, prepare, or verify')
+ fs.mkdirSync(path.join(root,'output'),{recursive:true})
  const mini=await automator.connect({wsEndpoint:'ws://127.0.0.1:9420'})
  const report={mode,checked_at:new Date().toISOString(),checks:[]}
  let stopped=false,cloudStopped=false,captureStopped=false,prepared=false
  function command(port,text){
   const r=spawnSync('pwsh.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',
-   'D:\\xuantie\\work\\scripts\\serial\\board_cmd.ps1','-Port',port,'-Commands',text,'-TimeoutMs','6000'],
+   path.join(__dirname,'serial','board_cmd.ps1'),'-Port',port,'-Commands',text,'-TimeoutMs','6000'],
    {encoding:'utf8',timeout:10000,windowsHide:true})
   fs.appendFileSync(path.join(root,'output','reliable-serial.txt'),new Date().toISOString()+' '+port+' '+text+'\n'+(r.stdout||'')+'\n')
   if(r.status!==0)throw new Error('Board command failed: '+port+' '+text)

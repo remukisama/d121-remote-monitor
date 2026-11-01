@@ -3,12 +3,13 @@ const fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:
 const automator=require('miniprogram-automator')
 const root=path.resolve(__dirname,'..'),pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))
 async function main() {
+  fs.mkdirSync(path.join(root,'output'),{recursive:true})
   const mini=await automator.connect({wsEndpoint:'ws://127.0.0.1:9420'})
   const report={checked_at:new Date().toISOString(),checks:[]}
   let slaveStopped=false
   function command(port,text) {
     const result=spawnSync('pwsh.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',
-      'D:\\xuantie\\work\\scripts\\serial\\board_cmd.ps1','-Port',port,'-Commands',text,'-TimeoutMs','6000'],
+      path.join(__dirname,'serial','board_cmd.ps1'),'-Port',port,'-Commands',text,'-TimeoutMs','6000'],
       {encoding:'utf8',timeout:10000,windowsHide:true})
     fs.appendFileSync(path.join(root,'output','cloud-hardware-serial.txt'),port+' '+text+'\n'+(result.stdout||'')+'\n')
     if(result.status!==0)throw new Error('Board command failed: '+port+' '+text)
